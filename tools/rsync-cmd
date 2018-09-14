@@ -1,0 +1,10 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+  echo "usage: $0 source-dir"
+  exit 3
+fi
+
+rsync -av --no-owner --no-group --delete --modify-window=2 "$1/" /trinket/
+sync
+
