@@ -22,21 +22,21 @@ import time
 # ---- configure board   --------------------------------------------------
 
 # Built in red LED
-led = DigitalInOut(board.D13)
+led           = DigitalInOut(board.D13)
 led.direction = Direction.OUTPUT
 
 # Analog input on D1
 v_pin = AnalogIn(board.D1)
 
 # Digital input with pulldown on D3
-button = DigitalInOut(board.D3)
+button           = DigitalInOut(board.D3)
 button.direction = Direction.INPUT
-button.pull = Pull.DOWN
+button.pull      = Pull.DOWN
 
 # --- get and convert analog-in   ------------------------------------------
 
 def get_voltage(pin):
-  mult = 1.0                              # multiplier for voltage-split
+  mult = 1.686                              # multiplier for voltage-split
   return (pin.value*mult*3.3)/65536
 
 # --- display voltage on the OLED   ----------------------------------------
@@ -44,13 +44,16 @@ def get_voltage(pin):
 def display_voltage(v):
   pass
 
-# --- main-loop   ----------------------------------------------------------
+# --- setup   --------------------------------------------------------------
 
 active    = False
 is_pushed = False
 
-print("starting main-loop")
+# --- main-loop   ----------------------------------------------------------
+
+print("# starting main-loop")
 start = time.monotonic()
+last  = start
 while True:
   if button.value and not is_pushed:
     active    = not active                     # toggle state
@@ -65,7 +68,11 @@ while True:
   else:
     led.value = 1
 
-  # Read analog voltage on D1, and pipe the value to serial console
-  voltage = get_voltage(v_pin)
-  print("%0.5f: %0.2f" % (time.monotonic()-start,voltage))
-  display_voltage(voltage)
+  # Read analog voltage on D1, and pipe the value to serial console.
+  # We don't want to flood the console, so send one measurement every second
+  now = time.monotonic()
+  if now - last >= 1:
+    voltage = get_voltage(v_pin)
+    print("%10.5f: %0.2f" % (now-start,voltage))
+    display_voltage(voltage)
+    last = now
