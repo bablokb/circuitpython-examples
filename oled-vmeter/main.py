@@ -1,5 +1,5 @@
 # -------------------------------------------------------------------------
-# Volt-Meter implementation for the Trinket-M0 with a 128x64 OLED display
+# Volt-Meter implementation for the Trinket-M0
 #
 # PIN-setup:
 # 0: SDA (I2C-OLED)                   3: digital in (button)
@@ -9,7 +9,7 @@
 # Author: Bernhard Bablok
 # License: GPL3
 #
-# Website: https://github.com/bablokb/m0-oled-vmeter
+# Website: https://github.com/bablokb/trinket-m0/vmeter
 #
 # -------------------------------------------------------------------------
 
@@ -18,6 +18,12 @@ from digitalio import DigitalInOut, Direction, Pull
 from analogio import AnalogOut, AnalogIn
 
 import time
+
+import busio as io
+import adafruit_ds3231
+
+i2c = io.I2C(board.SCL, board.SDA)
+rtc = adafruit_ds3231.DS3231(i2c)
 
 # ---- configure board   --------------------------------------------------
 
@@ -38,11 +44,6 @@ button.pull      = Pull.DOWN
 def get_voltage(pin):
   mult = 1.686                              # multiplier for voltage-split
   return (pin.value*mult*3.3)/65536
-
-# --- display voltage on the OLED   ----------------------------------------
-
-def display_voltage(v):
-  pass
 
 # --- setup   --------------------------------------------------------------
 
@@ -73,6 +74,7 @@ while True:
   now = time.monotonic()
   if now - last >= 1:
     voltage = get_voltage(v_pin)
-    print("%10.5f: %0.2f" % (now-start,voltage))
-    display_voltage(voltage)
+    t = rtc.datetime
+    print("%04d%02d%02d-%02d:%02d:%02d %0.2f" %
+          (t.tm_year,t.tm_mon,t.tm_mday,t.tm_hour,t.tm_min, t.tm_sec,voltage))
     last = now
