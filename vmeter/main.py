@@ -2,9 +2,9 @@
 # Volt-Meter implementation for the Trinket-M0
 #
 # PIN-setup:
-# 0: SDA (I2C-OLED)                   3: digital in (button)
-# 1: analog in (voltage)              4:
-# 2: SCL (I2C-OLED)
+# 0: SDA (I2C-RTC)                    3: digital in (button)
+# 1: analog in (voltage)              4: digital in (on/off seriell console)
+# 2: SCL (I2C-RTC)
 #
 # Author: Bernhard Bablok
 # License: GPL3
