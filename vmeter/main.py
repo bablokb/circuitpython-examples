@@ -3,8 +3,8 @@
 #
 # PIN-setup:
 # 0: SDA (I2C-RTC)                    3: digital in (button)
-# 1: analog in (voltage)              4: digital in (on/off seriell console)
-# 2: SCL (I2C-RTC)
+# 1: analog in (voltage)              4: digital in (on/off serial console
+# 2: SCL (I2C-RTC)                                   connect to GND to turn on)
 #
 # Author: Bernhard Bablok
 # License: GPL3
@@ -19,11 +19,12 @@ from analogio import AnalogOut, AnalogIn
 
 import time
 
-import busio as io
-import adafruit_ds3231
-
-i2c = io.I2C(board.SCL, board.SDA)
-rtc = adafruit_ds3231.DS3231(i2c)
+use_rtc = False
+if use_rtc:
+  import busio as io
+  import adafruit_ds3231
+  i2c = io.I2C(board.SCL, board.SDA)
+  rtc = adafruit_ds3231.DS3231(i2c)
 
 # ---- configure board   --------------------------------------------------
 
@@ -39,20 +40,27 @@ button           = DigitalInOut(board.D3)
 button.direction = Direction.INPUT
 button.pull      = Pull.DOWN
 
+# Digital input with pullup on D4 (default is off for serial console)
+usbcon           = DigitalInOut(board.D4)
+usbcon.direction = Direction.INPUT
+usbcon.pull      = Pull.UP
+
 # --- get and convert analog-in   ------------------------------------------
 
 def get_voltage(pin):
-  mult = 1.686                              # multiplier for voltage-split
+  mult = 1.67                              # multiplier for voltage-split
   return (pin.value*mult*3.3)/65536
 
 # --- setup   --------------------------------------------------------------
 
-active    = False
-is_pushed = False
+active     = False
+is_pushed  = False
+use_usbcon = usbcon.value == 0
 
 # --- main-loop   ----------------------------------------------------------
 
-print("# starting main-loop")
+if use_usbcon:
+  print("# starting main-loop")
 start = time.monotonic()
 last  = start
 while True:
@@ -74,7 +82,12 @@ while True:
   now = time.monotonic()
   if now - last >= 1:
     voltage = get_voltage(v_pin)
-    t = rtc.datetime
-    print("%04d%02d%02d-%02d:%02d:%02d %0.2f" %
-          (t.tm_year,t.tm_mon,t.tm_mday,t.tm_hour,t.tm_min, t.tm_sec,voltage))
+    if use_rtc:
+      t = rtc.datetime
+    if use_usbcon:
+      if use_rtc:
+        print("%04d%02d%02d-%02d:%02d:%02d %0.2f" %
+              (t.tm_year,t.tm_mon,t.tm_mday,t.tm_hour,t.tm_min, t.tm_sec,voltage))
+      else:
+        print("(%0.2f,)" % voltage)
     last = now
