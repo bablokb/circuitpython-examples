@@ -73,6 +73,21 @@ def meter(u0):
   print("elapsed time: {0:5.4f}".format(t2))
   return t2/R
 
+def print_capacity(c):
+  if c < 1e-9:
+    size="p"
+    c *= 1e+12
+  elif c<1e-6:
+    size="n"
+    c *= 1e+9
+  elif c<1e-3:
+    size="µ"
+    c *= 1e+6
+  else:
+    size="m"
+    c *= 1e+3
+  print("capacity: %d%sF" % (int(c),size))
+
 # main program ---
 
 init()
@@ -80,5 +95,5 @@ sps()
 while True:
   u0 = discharge()
   c = meter(u0)
-  print("capacity: %r" % c)
+  print_capacity(c)
   time.sleep(3)
