@@ -21,9 +21,18 @@ from digitalio import DigitalInOut, Direction
 from analogio  import AnalogIn
 import time
 
-PIN_CHARGE    = DigitalInOut(board.D0)
-PIN_DISCHARGE = DigitalInOut(board.D1)
-PIN_ADC       = AnalogIn(board.D2)
+# Trinket-M0
+#PIN_CHARGE    = DigitalInOut(board.D0)
+#PIN_DISCHARGE = DigitalInOut(board.D1)
+#PIN_ADC       = AnalogIn(board.D2)
+#U_MIN         = 200
+
+# Pico RP2040
+PIN_CHARGE    = DigitalInOut(board.GP28) # #34
+PIN_DISCHARGE = DigitalInOut(board.GP27) # #32
+PIN_ADC       = AnalogIn(board.A0)       # #31
+U_MIN         = 310
+
 R             = 1000000  # 1MΩ
 
 def init():
@@ -50,7 +59,7 @@ def discharge():
   while True:
     u0 = PIN_ADC.value
     print("  {0:5.2f}: {1:5d}".format(time.monotonic(),u0))
-    if u0 < 200:
+    if u0 < U_MIN:
       break
     time.sleep(1)
   PIN_DISCHARGE.direction = Direction.INPUT
