@@ -6,6 +6,6 @@ if [ -z "$1" ]; then
 fi
 
 mount /trinket
-rsync -av --no-owner --no-group --delete --modify-window=2 "$1/" /trinket/
+rsync -av -L --no-owner --no-group --delete --modify-window=2 "$1/" /trinket/
 sync
 umount /trinket
