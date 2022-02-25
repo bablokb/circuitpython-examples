@@ -5,6 +5,35 @@ import busio
 import digitalio
 from adafruit_bme280 import advanced as adafruit_bme280
 
+# button (with hardware-pullup)
+PIN_BTN       = board.GP20
+btn           = digitalio.DigitalInOut(PIN_BTN)
+btn.direction = digitalio.Direction.INPUT
+SLEEP_DEEP    = btn.value
+
+# --- print results   ------------------------------------------------------
+
+def log_data(bme280):
+  print("{0:f},{1:0.1f},{2:0.1f},{3:0.1f}".format(
+    1000*time.monotonic(),
+    bme280.temperature,
+    (bme280.pressure/alt_fac),
+    bme280.humidity))
+
+# --- loop with light sleep   ----------------------------------------------
+
+def loop():
+  while True:
+    start = time.monotonic()
+    log_data(bme280)
+
+    time_alarm = alarm.time.TimeAlarm(monotonic_time=start+10)
+    alarm.light_sleep_until_alarms(time_alarm)
+
+# --- main program   --------------------------------------------------------
+
+start = time.monotonic()
+
 # Create library object using our Bus I2C port
 i2c    = busio.I2C(board.GP27, board.GP26)  # SCL, SDA
 bme280 = adafruit_bme280.Adafruit_BME280_I2C(i2c,address=0x76)
@@ -26,13 +55,9 @@ time.sleep(1)
 altitude_at_location = 525
 alt_fac = pow(1.0-altitude_at_location/44330.0, 5.255)
 
-while True:
-  start = time.monotonic()
-  print("{0:f},{1:0.1f},{2:0.1f},{3:0.1f}".format(
-    1000*time.monotonic(),
-    bme280.temperature,
-    (bme280.pressure/alt_fac),
-    bme280.humidity))
-
+if SLEEP_DEEP:
+  log_data(bme280)
   time_alarm = alarm.time.TimeAlarm(monotonic_time=start+10)
-  alarm.light_sleep_until_alarms(time_alarm)
+  alarm.exit_and_deep_sleep_until_alarms(time_alarm)
+else:
+  loop()
