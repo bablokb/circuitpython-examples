@@ -1,4 +1,5 @@
 import time
+import alarm
 import board
 import busio
 import digitalio
@@ -33,4 +34,5 @@ while True:
     (bme280.pressure/alt_fac),
     bme280.humidity))
 
-  time.sleep(10-(time.monotonic()-start))
+  time_alarm = alarm.time.TimeAlarm(monotonic_time=start+10)
+  alarm.light_sleep_until_alarms(time_alarm)
