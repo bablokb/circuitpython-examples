@@ -18,7 +18,8 @@ buzzer = pwmio.PWMOut(board.GP18,frequency=880,duty_cycle=0)
 i2c    = busio.I2C(board.GP27, board.GP26)  # SCL, SDA
 
 apds = APDS9960(i2c)
-apds.proximity_interrupt_threshold = (0,3)
+apds._write8(0x8F,13)                          # set PGAIN=3, i.e. 8x
+apds.proximity_interrupt_threshold = (0,5,5)
 apds.enable_proximity_interrupt = True
 
 # enable the sensor's proximity engine
