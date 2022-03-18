@@ -1,10 +1,11 @@
 # -------------------------------------------------------------------------
-# I2C-template
+# i2c_template/main.py: I2C-template
 #
 # Author: Bernhard Bablok
 # License: GPL3
 #
 # Website: https://github.com/bablokb/trinket-m0
+# Website: https://github.com/bablokb/circuit-python-examples
 #
 # -------------------------------------------------------------------------
 

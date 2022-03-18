@@ -12,7 +12,7 @@
 # Note that R*C is the time of a single measurement, this should be neither
 # too large nor too small.
 #
-# Website: https://github.com/bablokb/trinket-m0
+# Website: https://github.com/bablokb/circuit-python-examples
 #
 # ----------------------------------------------------------------------------
 

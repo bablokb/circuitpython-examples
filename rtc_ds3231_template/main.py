@@ -1,10 +1,10 @@
 # -------------------------------------------------------------------------
-# Dump memory information
+# rtc_ds3231_template/main.py: template for DS3231 RTC
 #
 # Author: Bernhard Bablok
 # License: GPL3
 #
-# Website: https://github.com/bablokb/trinket-m0
+# Website: https://github.com/bablokb/circuit-python-examples
 #
 # -------------------------------------------------------------------------
 
