@@ -4,8 +4,7 @@
 # Author: Bernhard Bablok
 # License: GPL3
 #
-# Website: https://github.com/bablokb/trinket-m0
-# Website: https://github.com/bablokb/circuit-python-examples
+# Website: https://github.com/bablokb/circuitpython-examples
 #
 # -------------------------------------------------------------------------
 

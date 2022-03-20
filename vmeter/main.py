@@ -9,7 +9,7 @@
 # Author: Bernhard Bablok
 # License: GPL3
 #
-# Website: https://github.com/bablokb/trinket-m0/vmeter
+# Website: https://github.com/bablokb/circuitpython-examples/vmeter
 #
 # -------------------------------------------------------------------------
 
