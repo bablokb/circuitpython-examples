@@ -8,22 +8,25 @@
 #
 # ----------------------------------------------------------------------------
 
+import board
 import time
 import alarm
 import microcontroller
 import random
+import busio
 
-uid = ''.join('{:02x}'.format(x) for x in microcontroller.cpu.uid)
+uart = busio.UART(board.GP0, board.GP1, baudrate=115200)
+uid  = ''.join('{:02x}'.format(x) for x in microcontroller.cpu.uid)
 
 # --- print results   ------------------------------------------------------
 
 def log_data():
-  print("{0:f},{1:s},{2:0.3f},{3:0.3f}".format(
+  uart.write(bytearray("{0:f},{1:s},{2:0.3f},{3:0.3f}\r\n".format(
     1000*time.monotonic(),
     uid,
     random.random(),
     random.random()
-    ))
+    ).encode()))
 
 # --- main program   --------------------------------------------------------
 
