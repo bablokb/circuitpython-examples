@@ -61,10 +61,6 @@ while True:
       continue
   except Exception as e:
     print("Failed:\n", e)
-    try:
-      esp.socket_disconnect()
-    except:
-      pass
     continue
 
 # transmit data
