@@ -13,6 +13,7 @@ start_time = time.monotonic()
 
 import board
 import busio
+from   digitalio import DigitalInOut
 
 from adafruit_espatcontrol import (
   adafruit_espatcontrol,
@@ -26,13 +27,16 @@ except ImportError:
   print("WiFi secrets are kept in secrets.py, please add them there!")
   raise
 
-PIN_RX = board.GP1
-PIN_TX = board.GP0
-uart = busio.UART(PIN_TX, PIN_RX, baudrate=115200, receiver_buffer_size=2048)
+PIN_RX  = board.GP1
+PIN_TX  = board.GP0
+PIN_RST = board.GP2
+
+uart    = busio.UART(PIN_TX, PIN_RX, baudrate=115200, receiver_buffer_size=2048)
+rst_pin = DigitalInOut(PIN_RST)
 
 print("ESP AT commands")
 esp = adafruit_espatcontrol.ESP_ATcontrol(
-  uart, 115200, reset_pin=None, rts_pin=None, debug=secrets["debugflag"]
+  uart, 115200, reset_pin=rst_pin, rts_pin=None, debug=secrets["debugflag"]
 )
 
 wifi = adafruit_espatcontrol_wifimanager.ESPAT_WiFiManager(esp, secrets, None)
