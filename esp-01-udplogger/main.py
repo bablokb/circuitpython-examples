@@ -9,6 +9,8 @@
 # -------------------------------------------------------------------------
 
 import time
+start_time = time.monotonic()
+
 import board
 import busio
 
@@ -16,8 +18,6 @@ from adafruit_espatcontrol import (
   adafruit_espatcontrol,
   adafruit_espatcontrol_wifimanager,
 )
-
-start_time = time.monotonic()
 
 # Get wifi details and more from a secrets.py file
 try:
@@ -44,7 +44,8 @@ while True:
     wifi.connect()
     break
   except Exception as e:
-    print("Failed:\n", e)
+    print("Failed, resetting device:\n", e)
+    wifi.reset()
     continue
 
 # setup UDP
