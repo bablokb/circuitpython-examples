@@ -6,7 +6,7 @@ if [ -z "$1" ]; then
 fi
 
 mount /trinket
-rsync -av -L --exclude "$1/boot_out.txt" \
+rsync -av -L --exclude "boot_out.txt" \
       --no-owner --no-group --delete --modify-window=2 "$1/" /trinket/
 sync
 umount /trinket
