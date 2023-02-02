@@ -23,7 +23,7 @@
 #-----------------------------------------------------------------------------
 
 # test to execute
-TESTS=[1,2,3,4,5]
+TESTS=[1,3]
 REPEAT_LOW=3
 REPEAT_HIGH=3
 
@@ -32,18 +32,24 @@ import board
 import countio
 from digitalio import DigitalInOut, Direction, Pull
 
-# imports for PCF8563
+# imports for PCF85x3
 import busio
-from adafruit_pcf8523 import PCF8523 as PCF_RTC
-#from adafruit_pcf8563 import PCF8563 as PCF_RTC
+#from adafruit_pcf8523 import PCF8523 as PCF_RTC
+from adafruit_pcf8563 import PCF8563 as PCF_RTC
 
 # --- configuration   --------------------------------------------------------
 
-PIN_INT  = board.GP5   # for PCF8523/PCF8563
-PIN_COUT = board.GP5   # for PCF8523
+# pico
+#PIN_SDA  = board.GP2   # connect to RTC
+#PIN_SCL  = board.GP3   # connect to RTC
+#PIN_INT  = board.GP5   # for PCF8523/PCF8563
 #PIN_COUT = board.GP4   # for PCF8563
-PIN_SDA  = board.GP2   # connect to RTC
-PIN_SCL  = board.GP3   # connect to RTC
+
+# XIAO RP2040 with expansion board and RTC8563
+PIN_SDA  = board.SDA   # connect to RTC
+PIN_SCL  = board.SCL   # connect to RTC
+PIN_INT  = None
+PIN_COUT = None
 
 LED_TIME           = 0.5         # blink-duration
 DELAY_TIME_LOW     = 10          # delay for timer low-frequency
@@ -52,24 +58,41 @@ DURATION_TIME_HIGH = 10          # duration of high-frequency tests
 
 CLKOUT_FREQ = PCF_RTC.CLOCKOUT_FREQ_32HZ
 
-FREQ_MAP = {
-  PCF_RTC.CLOCKOUT_FREQ_32KHZ: 32768,
-  PCF_RTC.CLOCKOUT_FREQ_16KHZ: 16384,
-  PCF_RTC.CLOCKOUT_FREQ_8KHZ:   8192,
-  PCF_RTC.CLOCKOUT_FREQ_4KHZ:   4096,
-  PCF_RTC.CLOCKOUT_FREQ_1KHZ:   1024,
-  PCF_RTC.CLOCKOUT_FREQ_32HZ:     32,
-  PCF_RTC.CLOCKOUT_FREQ_1HZ:       1
-  }
+if hasattr(PCF_RTC,"CLOCKOUT_FREQ_16KHZ"):
+  FREQ_MAP = {
+    PCF_RTC.CLOCKOUT_FREQ_32KHZ: 32768,
+    PCF_RTC.CLOCKOUT_FREQ_16KHZ: 16384,
+    PCF_RTC.CLOCKOUT_FREQ_8KHZ:   8192,
+    PCF_RTC.CLOCKOUT_FREQ_4KHZ:   4096,
+    PCF_RTC.CLOCKOUT_FREQ_1KHZ:   1024,
+    PCF_RTC.CLOCKOUT_FREQ_32HZ:     32,
+    PCF_RTC.CLOCKOUT_FREQ_1HZ:       1
+    }
+else:
+  FREQ_MAP = {
+    PCF_RTC.CLOCKOUT_FREQ_32KHZ: 32768,
+    PCF_RTC.CLOCKOUT_FREQ_1KHZ:   1024,
+    PCF_RTC.CLOCKOUT_FREQ_32HZ:     32,
+    PCF_RTC.CLOCKOUT_FREQ_1HZ:       1
+    }
 
 # --- create hardware objects   ----------------------------------------------
 
-led            = DigitalInOut(board.LED)
-led.direction  = Direction.OUTPUT
+if hasattr(board,'NEOPIXEL'):
+  import neopixel_write
+  led                 = DigitalInOut(board.NEOPIXEL)
+  led.direction       = Direction.OUTPUT
+  led_power           = DigitalInOut(board.NEOPIXEL_POWER)
+  led_power.direction = Direction.OUTPUT
+  led_value           = bytearray([255,0,0])  # GRB
+else:
+  led           = DigitalInOut(board.LED)
+  led.direction = Direction.OUTPUT
 
-intpin           = DigitalInOut(PIN_INT)
-intpin.direction = Direction.INPUT
-intpin.pull      = Pull.UP
+if PIN_INT:
+  intpin           = DigitalInOut(PIN_INT)
+  intpin.direction = Direction.INPUT
+  intpin.pull      = Pull.UP
 
 i2c = busio.I2C(PIN_SCL,PIN_SDA)
 rtc = PCF_RTC(i2c)
@@ -78,11 +101,27 @@ rtc = PCF_RTC(i2c)
 
 def blink(dur=LED_TIME,repeat=1):
   while repeat:
-    led.value = 1
-    time.sleep(dur)
-    led.value = 0
-    time.sleep(dur)
+    if hasattr(board,'NEOPIXEL'):
+      led_power.value = 1
+      neopixel_write.neopixel_write(led,led_value)
+      time.sleep(dur)
+      led_power.value = 0
+    else:
+      led.value = 1
+      time.sleep(dur)
+      led.value = 0
+    if repeat > 1:
+      time.sleep(dur)
     repeat -= 1
+
+# --- disable CLKOUT   -------------------------------------------------------
+
+def disable_clkout():
+  """ wrapper for different methods to disable CLKOUT """
+  if hasattr(rtc,"clockout_enabled"):
+    rtc.clockout_enabled = False
+  else:
+    rtc.clockout_frequency = rtc.CLOCKOUT_FREQ_DISABLED
 
 # --- get timer-clock and value   --------------------------------------------
 
@@ -205,7 +244,7 @@ def test5():
     counter.reset()
     rtc.clockout_frequency = CLKOUT_FREQ
     time.sleep(DURATION_TIME_HIGH)
-    rtc.clockout_frequency = rtc.CLOCKOUT_FREQ_DISABLED
+    disable_clkout()
     mean_freq = counter.count/DURATION_TIME_HIGH
     print(f"clock-pulses: {counter.count}")
     print(f"clock-freq:   {mean_freq}")
@@ -223,7 +262,7 @@ rtc.timerA_enabled     = False
 rtc.timerA_interrupt   = False
 rtc.timerA_status      = False
 rtc.timerA_pulsed      = False
-rtc.clockout_frequency = rtc.CLOCKOUT_FREQ_DISABLED
+disable_clkout()
 
 # execute tests
 for tst in [globals()[f"test{i}"] for i in TESTS]:
