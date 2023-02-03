@@ -34,7 +34,6 @@ PIN_RST = board.GP2
 uart    = busio.UART(PIN_TX, PIN_RX, baudrate=115200, receiver_buffer_size=2048)
 rst_pin = DigitalInOut(PIN_RST)
 
-print("ESP AT commands")
 esp = adafruit_espatcontrol.ESP_ATcontrol(
   uart, 115200, reset_pin=rst_pin, rts_pin=None, debug=secrets["debugflag"]
 )
@@ -44,19 +43,19 @@ wifi = adafruit_espatcontrol_wifimanager.ESPAT_WiFiManager(esp, secrets, None)
 # try to connect
 while True:
   try:
-    print("connecting to AP...")
-    wifi.connect()
+    print("main: resetting and connecting to AP...")
+    wifi.reset()
+    wifi.connect(timeout=5,retries=2)
     break
   except Exception as e:
-    print("Failed, resetting device:\n", e)
-    wifi.reset()
+    print("main: failed, retrying: \n", e)
     continue
 
 # setup UDP
 while True:
   try:
     print(
-      "connecting to UDP-server %s:%d" % (secrets["remoteip"],secrets["remoteport"])
+      "main: connecting to UDP-server %s:%d" % (secrets["remoteip"],secrets["remoteport"])
     )
     if esp.socket_connect(adafruit_espatcontrol.ESP_ATcontrol.TYPE_UDP,
                           secrets["remoteip"],secrets["remoteport"]):
@@ -65,14 +64,14 @@ while True:
       time.sleep(1)
       continue
   except Exception as e:
-    print("Failed:\n", e)
+    print("main: failed:\n", e)
     continue
 
 # transmit data
-print("initialization time: %f\n" % (time.monotonic()-start_time))
+print("main: initialization time: %f\n" % (time.monotonic()-start_time))
 while True:
   data = "%6.4f\n" % (1000*time.monotonic())
   data = data.encode('utf-8')
   start = time.monotonic()
   esp.socket_send(data)
-  print("tx-time:",time.monotonic()-start)
+  print("main: tx-time:",time.monotonic()-start)
