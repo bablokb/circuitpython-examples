@@ -35,14 +35,13 @@ except ImportError:
 debugflag = False
 
 # How Long to sleep between polling
-sleep_duration = 60
+sleep_duration = 10
 
 PIN_RX = board.GP1
 PIN_TX = board.GP0
 uart = busio.UART(PIN_TX, PIN_RX, baudrate=11520, receiver_buffer_size=2048)
 status_light = None
 
-print("ESP AT commands")
 esp = adafruit_espatcontrol.ESP_ATcontrol(
   uart, 115200, reset_pin=None, rts_pin=None, debug=debugflag
 )
@@ -50,10 +49,17 @@ wifi = adafruit_espatcontrol_wifimanager.ESPAT_WiFiManager(
   esp, secrets, status_light
 )
 
-print("ESP-01 local time")
+# try to connect
+try:
+  print("trying to connect...",end='')
+  wifi.connect()
+  print("...done")
+except Exception as e:
+  print("...failed: %r" % e)
+  raise e
+  #raise RuntimeError("failed to connect to %s" % secrets['ssid'])
 
-TIME_API = "http://worldtimeapi.org/api/ip"
-
+TIME_API = secrets["time_api_url"]
 the_rtc = rtc.RTC()
 
 response = None
@@ -67,20 +73,24 @@ while True:
     continue
 
 json = response.json()
-current_time = json["datetime"]
-the_date, the_time = current_time.split("T")
-year, month, mday = [int(x) for x in the_date.split("-")]
-the_time = the_time.split(".")[0]
-hours, minutes, seconds = [int(x) for x in the_time.split(":")]
+if 'struct_time' in json:
+  now = time.struct_time(tuple(json['struct_time']))
+else:
+  current_time = json["datetime"]
+  the_date, the_time = current_time.split("T")
+  year, month, mday = [int(x) for x in the_date.split("-")]
+  the_time = the_time.split(".")[0]
+  hours, minutes, seconds = [int(x) for x in the_time.split(":")]
 
-# We can also fill in these extra nice things
-year_day = json["day_of_year"]
-week_day = json["day_of_week"]
-is_dst = json["dst"]
+  # We can also fill in these extra nice things
+  year_day = json["day_of_year"]
+  week_day = json["day_of_week"]
+  is_dst = json["dst"]
 
-now = time.struct_time(
-  (year, month, mday, hours, minutes, seconds, week_day, year_day, is_dst)
-)
+  now = time.struct_time(
+    (year, month, mday, hours, minutes, seconds, week_day, year_day, is_dst)
+  )
+
 print(now)
 the_rtc.datetime = now
 
