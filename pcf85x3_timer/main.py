@@ -22,13 +22,6 @@
 # Website: https://github.com/bablokb/circuitpython-examples
 #-----------------------------------------------------------------------------
 
-# test to execute
-#TESTS=[1,3]           # XIAO RP2040 with expansion board and RTC8563
-TESTS=[1,2,3,4,5]      # pico
-
-REPEAT_LOW=3
-REPEAT_HIGH=3
-
 import time
 import board
 import countio
@@ -37,7 +30,8 @@ from digitalio import DigitalInOut, Direction, Pull
 # imports for PCF85x3
 import busio
 #from adafruit_pcf8523 import PCF8523 as PCF_RTC
-from adafruit_pcf8563 import PCF8563 as PCF_RTC
+#from adafruit_pcf8563 import PCF8563 as PCF_RTC
+from pcf85063a import PCF85063A as PCF_RTC
 
 # --- configuration   --------------------------------------------------------
 
@@ -45,20 +39,37 @@ from adafruit_pcf8563 import PCF8563 as PCF_RTC
 PIN_SDA  = board.GP2   # connect to RTC
 PIN_SCL  = board.GP3   # connect to RTC
 PIN_INT  = board.GP5   # for PCF8523/PCF8563
+INT_ACT  = 0           # interrupt is active-low
 PIN_COUT = board.GP7   # for PCF8563
+TESTS=[1,2,3,4,5]      # pico
 
 # XIAO RP2040 with expansion board and RTC8563
 #PIN_SDA  = board.SDA   # connect to RTC
 #PIN_SCL  = board.SCL   # connect to RTC
 #PIN_INT  = None
+#INT_ACT  = 0           # interrupt is active-low
 #PIN_COUT = None
+#TESTS=[1,3]           # XIAO RP2040 with expansion board and RTC8563
+
+# Badger2040W with PCF85063A
+PIN_SDA  = board.SDA
+PIN_SCL  = board.SCL
+PIN_INT  = board.RTC_ALARM
+INT_ACT  = 1           # interrupt is active-high
+PIN_COUT = None
+TESTS=[1,2,3,4]
+
+REPEAT_LOW=3
+REPEAT_HIGH=3
 
 LED_TIME           = 0.5         # blink-duration
 DELAY_TIME_LOW     = 10          # delay for timer low-frequency
 DELAY_TIME_HIGH    = 0.02        # delay for timer high-frequency
-DURATION_TIME_HIGH = 100         # duration of high-frequency tests
+DURATION_TIME_HIGH = 10         # duration of high-frequency tests
 
 CLKOUT_FREQ = PCF_RTC.CLOCKOUT_FREQ_32KHZ
+
+# --- create hardware objects   ----------------------------------------------
 
 FREQ_MAP = {}
 for key,value in [
@@ -68,8 +79,6 @@ for key,value in [
   ("CLOCKOUT_FREQ_32HZ",     32),("CLOCKOUT_FREQ_1HZ",       1)]:
   if hasattr(PCF_RTC,key):
     FREQ_MAP[getattr(PCF_RTC,key)] = value
-
-# --- create hardware objects   ----------------------------------------------
 
 if hasattr(board,'NEOPIXEL'):
   import neopixel_write
@@ -85,7 +94,10 @@ else:
 if PIN_INT:
   intpin           = DigitalInOut(PIN_INT)
   intpin.direction = Direction.INPUT
-  intpin.pull      = Pull.UP
+  if INT_ACT:
+    intpin.pull      = Pull.DOWN
+  else:
+    intpin.pull      = Pull.UP
 
 i2c = busio.I2C(PIN_SCL,PIN_SDA)
 rtc = PCF_RTC(i2c)
@@ -177,7 +189,7 @@ def test2():
   for n in range(REPEAT_LOW):
     start = time.monotonic()
     rtc.timerA_enabled   = True
-    while intpin.value:
+    while intpin.value != INT_ACT:
       pass
     # timer fired, reset and blink
     elapsed = time.monotonic() - start
@@ -221,7 +233,7 @@ def test4():
     end   = start + DURATION_TIME_HIGH
     rtc.timerA_enabled   = True
     while time.monotonic() < end:          # run for (at least) test-period
-      while intpin.value:
+      while intpin.value != INT_ACT:
         pass
       # timer fired: reset and wait for next elapsed timer
       rtc.timerA_status = False
