@@ -23,7 +23,9 @@
 #-----------------------------------------------------------------------------
 
 # test to execute
-TESTS=[1,3]
+#TESTS=[1,3]           # XIAO RP2040 with expansion board and RTC8563
+TESTS=[1,2,3,4,5]      # pico
+
 REPEAT_LOW=3
 REPEAT_HIGH=3
 
@@ -40,23 +42,23 @@ from adafruit_pcf8563 import PCF8563 as PCF_RTC
 # --- configuration   --------------------------------------------------------
 
 # pico
-#PIN_SDA  = board.GP2   # connect to RTC
-#PIN_SCL  = board.GP3   # connect to RTC
-#PIN_INT  = board.GP5   # for PCF8523/PCF8563
-#PIN_COUT = board.GP4   # for PCF8563
+PIN_SDA  = board.GP2   # connect to RTC
+PIN_SCL  = board.GP3   # connect to RTC
+PIN_INT  = board.GP5   # for PCF8523/PCF8563
+PIN_COUT = board.GP7   # for PCF8563
 
 # XIAO RP2040 with expansion board and RTC8563
-PIN_SDA  = board.SDA   # connect to RTC
-PIN_SCL  = board.SCL   # connect to RTC
-PIN_INT  = None
-PIN_COUT = None
+#PIN_SDA  = board.SDA   # connect to RTC
+#PIN_SCL  = board.SCL   # connect to RTC
+#PIN_INT  = None
+#PIN_COUT = None
 
 LED_TIME           = 0.5         # blink-duration
 DELAY_TIME_LOW     = 10          # delay for timer low-frequency
 DELAY_TIME_HIGH    = 0.02        # delay for timer high-frequency
-DURATION_TIME_HIGH = 10          # duration of high-frequency tests
+DURATION_TIME_HIGH = 100         # duration of high-frequency tests
 
-CLKOUT_FREQ = PCF_RTC.CLOCKOUT_FREQ_32HZ
+CLKOUT_FREQ = PCF_RTC.CLOCKOUT_FREQ_32KHZ
 
 if hasattr(PCF_RTC,"CLOCKOUT_FREQ_16KHZ"):
   FREQ_MAP = {
@@ -114,6 +116,14 @@ def blink(dur=LED_TIME,repeat=1):
       time.sleep(dur)
     repeat -= 1
 
+# --- enable CLKOUT   --------------------------------------------------------
+
+def enable_clkout(freq):
+  """ wrapper for enable CLKOUT """
+  rtc.clockout_frequency = freq
+  if hasattr(rtc,"clockout_enabled"):
+    rtc.clockout_enabled = True
+
 # --- disable CLKOUT   -------------------------------------------------------
 
 def disable_clkout():
@@ -160,9 +170,9 @@ def test1():
     while not rtc.timerA_status:
       pass
     # timer fired, reset and blink
+    elapsed = time.monotonic() - start
     rtc.timerA_enabled = False
     rtc.timerA_status  = False
-    elapsed = time.monotonic() - start
     print(f"elapsed: {elapsed}")
     blink()
 
@@ -179,9 +189,9 @@ def test2():
     while intpin.value:
       pass
     # timer fired, reset and blink
+    elapsed = time.monotonic() - start
     rtc.timerA_enabled   = False
     rtc.timerA_status    = False
-    elapsed = time.monotonic() - start
     print(f"elapsed: {elapsed}")
     blink()
 
@@ -236,13 +246,15 @@ def test5():
   """ Test5: CLKOUT counter (must be last test)"""
   print(f"running test5 (clockout): freq: {FREQ_MAP[CLKOUT_FREQ]}, duration: {DURATION_TIME_HIGH}")
 
+  # PCF8523 share INT and CLKOUT, so disable interrupt and reset pin
   rtc.timerA_interrupt = False
   intpin.deinit()
+
   counter = countio.Counter(pin=PIN_COUT,edge=countio.Edge.RISE,
                             pull=Pull.UP)
   for n in range(REPEAT_HIGH):             # repeat complete test
     counter.reset()
-    rtc.clockout_frequency = CLKOUT_FREQ
+    enable_clkout(CLKOUT_FREQ)
     time.sleep(DURATION_TIME_HIGH)
     disable_clkout()
     mean_freq = counter.count/DURATION_TIME_HIGH
