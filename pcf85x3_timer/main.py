@@ -60,23 +60,14 @@ DURATION_TIME_HIGH = 100         # duration of high-frequency tests
 
 CLKOUT_FREQ = PCF_RTC.CLOCKOUT_FREQ_32KHZ
 
-if hasattr(PCF_RTC,"CLOCKOUT_FREQ_16KHZ"):
-  FREQ_MAP = {
-    PCF_RTC.CLOCKOUT_FREQ_32KHZ: 32768,
-    PCF_RTC.CLOCKOUT_FREQ_16KHZ: 16384,
-    PCF_RTC.CLOCKOUT_FREQ_8KHZ:   8192,
-    PCF_RTC.CLOCKOUT_FREQ_4KHZ:   4096,
-    PCF_RTC.CLOCKOUT_FREQ_1KHZ:   1024,
-    PCF_RTC.CLOCKOUT_FREQ_32HZ:     32,
-    PCF_RTC.CLOCKOUT_FREQ_1HZ:       1
-    }
-else:
-  FREQ_MAP = {
-    PCF_RTC.CLOCKOUT_FREQ_32KHZ: 32768,
-    PCF_RTC.CLOCKOUT_FREQ_1KHZ:   1024,
-    PCF_RTC.CLOCKOUT_FREQ_32HZ:     32,
-    PCF_RTC.CLOCKOUT_FREQ_1HZ:       1
-    }
+FREQ_MAP = {}
+for key,value in [
+  ("CLOCKOUT_FREQ_32KHZ", 32768),("CLOCKOUT_FREQ_16KHZ", 16384),
+  ("CLOCKOUT_FREQ_8KHZ",   8192),("CLOCKOUT_FREQ_4KHZ",   4096),
+  ("CLOCKOUT_FREQ_2KHZ",   2024),("CLOCKOUT_FREQ_1KHZ",   1024),
+  ("CLOCKOUT_FREQ_32HZ",     32),("CLOCKOUT_FREQ_1HZ",       1)]:
+  if hasattr(PCF_RTC,key):
+    FREQ_MAP[getattr(PCF_RTC,key)] = value
 
 # --- create hardware objects   ----------------------------------------------
 
