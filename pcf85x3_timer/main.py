@@ -1,7 +1,7 @@
 #-----------------------------------------------------------------------------
 # Example using the PCF85x3-RTC in timer-mode.
 #
-# The program uses various timer-features of the PCF8563/PCF8523-RTCs.
+# The program uses various timer-features of the PCF8563/PCF85063/PCF8523-RTCs.
 #
 # The program uses the countdown-timer of the RTC and works on a PCF8563 up to
 # 15300 seconds (i.e. 255m or 4h15m). For longer intervals than
@@ -65,7 +65,8 @@ REPEAT_HIGH=3
 LED_TIME           = 0.5         # blink-duration
 DELAY_TIME_LOW     = 10          # delay for timer low-frequency
 DELAY_TIME_HIGH    = 0.02        # delay for timer high-frequency
-DURATION_TIME_HIGH = 10         # duration of high-frequency tests
+DURATION_TIME_HIGH = 10          # duration of high-frequency tests
+ALARM_TIME         = 90          # alarm in now + xx secs
 
 CLKOUT_FREQ = PCF_RTC.CLOCKOUT_FREQ_32KHZ
 
@@ -119,6 +120,12 @@ def blink(dur=LED_TIME,repeat=1):
       time.sleep(dur)
     repeat -= 1
 
+# --- print current time   ---------------------------------------------------
+
+def print_time(ts):
+  """ print current time """
+  return "{0:02d}:{1:02d}:{2:02d}".format(ts.tm_hour,ts.tm_min,ts.tm_sec)
+
 # --- enable CLKOUT   --------------------------------------------------------
 
 def enable_clkout(freq):
@@ -160,6 +167,24 @@ def set_timer(delay):
     rtc.timerA_value = min(round(delay/3600),255)
   else:
     raise ValueError("delay too large")
+
+# --- test 0   ---------------------------------------------------------------
+
+def test0():
+  """ Test0: alarm """
+  print(f"running test0 (alarm flag): alarm in {ALARM_TIME}s")
+  for n in range(REPEAT_LOW):
+    rtc.alarm_status = False
+    dt = rtc.datetime
+    print("curr. time: ", print_time(dt))
+    alarm_time = time.localtime(time.mktime(dt) + ALARM_TIME)
+    print("alarm time: ", print_time(alarm_time))
+    rtc.alarm = (alarm_time,"daily")
+    while not rtc.alarm_status:
+      pass
+    # timer fired, print and blink
+    print("curr. time: ", print_time(rtc.datetime))
+    blink()
 
 # --- test 1   ---------------------------------------------------------------
 
