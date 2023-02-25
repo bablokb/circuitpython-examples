@@ -30,8 +30,8 @@ from digitalio import DigitalInOut, Direction, Pull
 # imports for PCF85x3
 import busio
 #from adafruit_pcf8523 import PCF8523 as PCF_RTC
-#from adafruit_pcf8563 import PCF8563 as PCF_RTC
-from pcf85063a import PCF85063A as PCF_RTC
+from adafruit_pcf8563 import PCF8563 as PCF_RTC
+#from pcf85063a import PCF85063A as PCF_RTC
 
 # --- configuration   --------------------------------------------------------
 
@@ -52,12 +52,12 @@ TESTS=[1,2,3,4,5]      # pico
 #TESTS=[1,3]           # XIAO RP2040 with expansion board and RTC8563
 
 # Badger2040W with PCF85063A
-PIN_SDA  = board.SDA
-PIN_SCL  = board.SCL
-PIN_INT  = board.RTC_ALARM
-INT_ACT  = 1           # interrupt is active-high
-PIN_COUT = None
-TESTS=[1,2,3,4]
+#PIN_SDA  = board.SDA
+#PIN_SCL  = board.SCL
+#PIN_INT  = board.RTC_ALARM
+#INT_ACT  = 1           # interrupt is active-high
+#PIN_COUT = None
+#TESTS=[1,2,3,4]
 
 REPEAT_LOW=3
 REPEAT_HIGH=3
@@ -209,6 +209,8 @@ def test1():
 def test2():
   """ Test2: low-frequency timer, checking interrupt-pin """
   print(f"running test2 (interrupt): delay: {DELAY_TIME_LOW}")
+  rtc.timerA_enabled   = False
+  rtc.timerA_status    = False
   set_timer(DELAY_TIME_LOW)
   rtc.timerA_interrupt = True
   for n in range(REPEAT_LOW):
