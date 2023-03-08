@@ -31,6 +31,7 @@ from digitalio import DigitalInOut, Direction, Pull
 import busio
 #from adafruit_pcf8523 import PCF8523 as PCF_RTC
 from adafruit_pcf8563 import PCF8563 as PCF_RTC
+from adafruit_pcf8563_timer import PCF8563_Timer as Timer
 #from pcf85063a import PCF85063A as PCF_RTC
 
 # --- configuration   --------------------------------------------------------
@@ -66,7 +67,7 @@ LED_TIME           = 0.5         # blink-duration
 DELAY_TIME_LOW     = 10          # delay for timer low-frequency
 DELAY_TIME_HIGH    = 0.02        # delay for timer high-frequency
 DURATION_TIME_HIGH = 10          # duration of high-frequency tests
-ALARM_TIME         = 90          # alarm in now + xx secs
+ALARM_TIME         = 65          # alarm in now + xx secs
 
 CLKOUT_FREQ = PCF_RTC.CLOCKOUT_FREQ_32KHZ
 
@@ -102,6 +103,7 @@ if PIN_INT:
 
 i2c = busio.I2C(PIN_SCL,PIN_SDA)
 rtc = PCF_RTC(i2c)
+timer = Timer(rtc.i2c_device)
 
 # --- blink on-board-led   ---------------------------------------------------
 
@@ -150,21 +152,21 @@ def set_timer(delay):
   if delay < 0.0000244:
     raise ValueError("delay too small")
   elif delay <= 0.062256:
-    rtc.timerA_frequency = rtc.TIMER_FREQ_4KHZ
-    rtc.timerA_value = min(round(delay*4096),255)
+    timer.timer_frequency = timer.TIMER_FREQ_4KHZ
+    timer.timer_value = min(round(delay*4096),255)
   elif delay <= 3.984375:
-    rtc.timerA_frequency = rtc.TIMER_FREQ_64HZ
-    rtc.timerA_value = min(round(delay*64),255)
+    timer.timer_frequency = timer.TIMER_FREQ_64HZ
+    timer.timer_value = min(round(delay*64),255)
   elif delay <= 255:
-    rtc.timerA_frequency = rtc.TIMER_FREQ_1HZ
-    rtc.timerA_value = delay
+    timer.timer_frequency = timer.TIMER_FREQ_1HZ
+    timer.timer_value = delay
   elif delay <= 15300:
-    rtc.timerA_frequency = rtc.TIMER_FREQ_1_60HZ
-    rtc.timerA_value = min(round(delay/60),255)
+    timer.timer_frequency = timer.TIMER_FREQ_1_60HZ
+    timer.timer_value = min(round(delay/60),255)
   elif hasattr(rtc,"lost_power") and delay <= 918000:
     # only supported on PCF8523
-    rtc.timerA_frequency = rtc.TIMER_FREQ_1_3600HZ
-    rtc.timerA_value = min(round(delay/3600),255)
+    timer.timer_frequency = timer.TIMER_FREQ_1_3600HZ
+    timer.timer_value = min(round(delay/3600),255)
   else:
     raise ValueError("delay too large")
 
@@ -176,14 +178,14 @@ def test0():
   for n in range(REPEAT_LOW):
     rtc.alarm_status = False
     dt = rtc.datetime
-    print("curr. time: ", print_time(dt))
+    print(f"{n}. time before alarm: ", print_time(dt))
     alarm_time = time.localtime(time.mktime(dt) + ALARM_TIME)
-    print("alarm time: ", print_time(alarm_time))
+    print(f"{n}. time at alarm:     ", print_time(alarm_time))
     rtc.alarm = (alarm_time,"daily")
     while not rtc.alarm_status:
       pass
     # timer fired, print and blink
-    print("curr. time: ", print_time(rtc.datetime))
+    print(f"{n}. time after alarm:  ", print_time(rtc.datetime))
     blink()
 
 # --- test 1   ---------------------------------------------------------------
@@ -194,13 +196,13 @@ def test1():
   set_timer(DELAY_TIME_LOW)
   for n in range(REPEAT_LOW):
     start = time.monotonic()
-    rtc.timerA_enabled = True
-    while not rtc.timerA_status:
+    timer.timer_enabled = True
+    while not timer.timer_status:
       pass
     # timer fired, reset and blink
     elapsed = time.monotonic() - start
-    rtc.timerA_enabled = False
-    rtc.timerA_status  = False
+    timer.timer_enabled = False
+    timer.timer_status  = False
     print(f"elapsed: {elapsed}")
     blink()
 
@@ -209,19 +211,19 @@ def test1():
 def test2():
   """ Test2: low-frequency timer, checking interrupt-pin """
   print(f"running test2 (interrupt): delay: {DELAY_TIME_LOW}")
-  rtc.timerA_enabled   = False
-  rtc.timerA_status    = False
+  timer.timer_enabled   = False
+  timer.timer_status    = False
   set_timer(DELAY_TIME_LOW)
-  rtc.timerA_interrupt = True
+  timer.timer_interrupt = True
   for n in range(REPEAT_LOW):
     start = time.monotonic()
-    rtc.timerA_enabled   = True
+    timer.timer_enabled   = True
     while intpin.value != INT_ACT:
       pass
     # timer fired, reset and blink
     elapsed = time.monotonic() - start
-    rtc.timerA_enabled   = False
-    rtc.timerA_status    = False
+    timer.timer_enabled   = False
+    timer.timer_status    = False
     print(f"elapsed: {elapsed}")
     blink()
 
@@ -235,15 +237,15 @@ def test3():
     counter = 0
     start = time.monotonic()
     end   = start + DURATION_TIME_HIGH
-    rtc.timerA_enabled   = True
+    timer.timer_enabled   = True
     while time.monotonic() < end:          # run for (at least) test-period
-      while not rtc.timerA_status:
+      while not timer.timer_status:
         pass
       # timer fired: reset and wait for next elapsed timer
-      rtc.timerA_status = False
+      timer.timer_status = False
       counter += 1
     mean_delay = (time.monotonic()-start)/counter
-    rtc.timerA_enabled = False
+    timer.timer_enabled = False
     print(f"delay requested: {DELAY_TIME_HIGH}")
     print(f"delay observed:  {mean_delay} (mean of {counter} alarms)")
 
@@ -253,20 +255,20 @@ def test4():
   """ Test4: high-frequency timer, counting interrupt-pin """
   print(f"running test4 (interrupt): delay: {DELAY_TIME_HIGH}, duration: {DURATION_TIME_HIGH}")
   set_timer(DELAY_TIME_HIGH)
-  rtc.timerA_interrupt = True
+  timer.timer_interrupt = True
   for n in range(REPEAT_HIGH):             # repeat complete test
     counter = 0
     start = time.monotonic()
     end   = start + DURATION_TIME_HIGH
-    rtc.timerA_enabled   = True
+    timer.timer_enabled   = True
     while time.monotonic() < end:          # run for (at least) test-period
       while intpin.value != INT_ACT:
         pass
       # timer fired: reset and wait for next elapsed timer
-      rtc.timerA_status = False
+      timer.timer_status = False
       counter += 1
     mean_delay = (time.monotonic()-start)/counter
-    rtc.timerA_enabled = False
+    timer.timer_enabled = False
     print(f"delay requested: {DELAY_TIME_HIGH}")
     print(f"delay observed:  {mean_delay} (mean of {counter} alarms)")
 
@@ -277,7 +279,7 @@ def test5():
   print(f"running test5 (clockout): freq: {FREQ_MAP[CLKOUT_FREQ]}, duration: {DURATION_TIME_HIGH}")
 
   # PCF8523 share INT and CLKOUT, so disable interrupt and reset pin
-  rtc.timerA_interrupt = False
+  timer.timer_interrupt = False
   intpin.deinit()
 
   counter = countio.Counter(pin=PIN_COUT,edge=countio.Edge.RISE,
@@ -300,10 +302,10 @@ if (hasattr(rtc,"datetime_compromised") and rtc.datetime_compromised or
   rtc.datetime = time.struct_time((2023,1,1, 12,0,0, 6,1,-1))
 
 # Configure RTC
-rtc.timerA_enabled     = False
-rtc.timerA_interrupt   = False
-rtc.timerA_status      = False
-rtc.timerA_pulsed      = False
+timer.timer_enabled     = False
+timer.timer_interrupt   = False
+timer.timer_status      = False
+timer.timer_pulsed      = False
 disable_clkout()
 
 # execute tests
