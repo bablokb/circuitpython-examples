@@ -26,22 +26,34 @@ import time
 import board
 import countio
 from digitalio import DigitalInOut, Direction, Pull
-
-# imports for PCF85x3
 import busio
+
+# imports for PCF8523
 #from adafruit_pcf8523 import PCF8523 as PCF_RTC
-from adafruit_pcf8563 import PCF8563 as PCF_RTC
-from adafruit_pcf8563_timer import PCF8563_Timer as Timer
+
+# imports for PCF8563
+from adafruit_pcf8563.pcf8563 import PCF8563 as PCF_RTC
+from adafruit_pcf8563.timer import Timer
+from adafruit_pcf8563.clock import Clock
+
+# imports for PCF85063A
 #from pcf85063a import PCF85063A as PCF_RTC
 
 # --- configuration   --------------------------------------------------------
 
-# pico
+# pico left sinde
 PIN_SDA  = board.GP2   # connect to RTC
 PIN_SCL  = board.GP3   # connect to RTC
 PIN_INT  = board.GP5   # for PCF8523/PCF8563
-INT_ACT  = 0           # interrupt is active-low
 PIN_COUT = board.GP7   # for PCF8563
+
+# pico right side
+PIN_SDA  = board.GP26   # connect to RTC
+PIN_SCL  = board.GP27   # connect to RTC
+PIN_INT  = board.GP22   # for PCF8523/PCF8563
+PIN_COUT = board.GP21   # for PCF8563
+
+INT_ACT  = 0           # interrupt is active-low
 TESTS=[1,2,3,4,5]      # pico
 
 # XIAO RP2040 with expansion board and RTC8563
@@ -69,7 +81,7 @@ DELAY_TIME_HIGH    = 0.02        # delay for timer high-frequency
 DURATION_TIME_HIGH = 10          # duration of high-frequency tests
 ALARM_TIME         = 65          # alarm in now + xx secs
 
-CLKOUT_FREQ = PCF_RTC.CLOCKOUT_FREQ_32KHZ
+CLKOUT_FREQ = Clock.CLOCKOUT_FREQ_32KHZ
 
 # --- create hardware objects   ----------------------------------------------
 
@@ -79,8 +91,8 @@ for key,value in [
   ("CLOCKOUT_FREQ_8KHZ",   8192),("CLOCKOUT_FREQ_4KHZ",   4096),
   ("CLOCKOUT_FREQ_2KHZ",   2024),("CLOCKOUT_FREQ_1KHZ",   1024),
   ("CLOCKOUT_FREQ_32HZ",     32),("CLOCKOUT_FREQ_1HZ",       1)]:
-  if hasattr(PCF_RTC,key):
-    FREQ_MAP[getattr(PCF_RTC,key)] = value
+  if hasattr(Clock,key):
+    FREQ_MAP[getattr(Clock,key)] = value
 
 if hasattr(board,'NEOPIXEL'):
   import neopixel_write
@@ -104,6 +116,7 @@ if PIN_INT:
 i2c = busio.I2C(PIN_SCL,PIN_SDA)
 rtc = PCF_RTC(i2c)
 timer = Timer(rtc.i2c_device)
+clock = Clock(rtc.i2c_device)
 
 # --- blink on-board-led   ---------------------------------------------------
 
@@ -132,18 +145,18 @@ def print_time(ts):
 
 def enable_clkout(freq):
   """ wrapper for enable CLKOUT """
-  rtc.clockout_frequency = freq
-  if hasattr(rtc,"clockout_enabled"):
-    rtc.clockout_enabled = True
+  clock.clockout_frequency = freq
+  if hasattr(clock,"clockout_enabled"):
+    clock.clockout_enabled = True
 
 # --- disable CLKOUT   -------------------------------------------------------
 
 def disable_clkout():
   """ wrapper for different methods to disable CLKOUT """
-  if hasattr(rtc,"clockout_enabled"):
-    rtc.clockout_enabled = False
+  if hasattr(clock,"clockout_enabled"):
+    clock.clockout_enabled = False
   else:
-    rtc.clockout_frequency = rtc.CLOCKOUT_FREQ_DISABLED
+    clock.clockout_frequency = clock.CLOCKOUT_FREQ_DISABLED
 
 # --- get timer-clock and value   --------------------------------------------
 
