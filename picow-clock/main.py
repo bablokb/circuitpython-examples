@@ -30,9 +30,12 @@ import busio
 #from adafruit_pcf8523 import PCF8523 as PCF_RTC
 from adafruit_pcf8563 import PCF8563 as PCF_RTC
 
+# imports for DS3231
+import adafruit_ds3231
+
 # create RTCs
 i2c  = busio.I2C(PIN_SCL1,PIN_SDA1)
-rtcs = [rtc.RTC(),PCF_RTC(i2c)]
+rtcs = [PCF_RTC(i2c),adafruit_ds3231.DS3231(i2c)]
 
 # always release displays (unless you use a builtin-display)
 if not hasattr(board,'DISPLAY'):
@@ -52,8 +55,8 @@ view = DataView(
   bg_color=Color.WHITE,
   color=Color.BLACK,
   formats=["elapsed:", "{0}",
-           "int:", "{0}",
-           "ext1:", "{0}",
+           "PCF8563:", "{0}",
+           "DS3231:", "{0}",
            "diff:", "{0}"
            ],
 )
@@ -82,6 +85,7 @@ t_js     = wifi.get(secrets['TIMEAPI_URL']).json()
 dt_start = time.struct_time(tuple(t_js['struct_time']))
 
 # initialize RTCs
+rtc.RTC().datetime = dt_start
 for r in rtcs:
   r.datetime = dt_start
 
