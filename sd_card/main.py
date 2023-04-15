@@ -82,5 +82,9 @@ else:
 # results:
 #
 # - xiaio-rp2040, CP 8.0.5:
-#   - single: 0.03
-#   - bulk:   0.003, close: 0.035, various peaks ca. 0.080 (maybe gc)
+#   - single: 0.028 (30/1071)
+#   - bulk:   0.003 (30/10000)
+#
+# - xiaio-nrf52840, CP 8.0.5:
+#   - single: 0.027 (30/1115)
+#   - bulk:   0.002 (30/14000)
