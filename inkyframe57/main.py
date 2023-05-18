@@ -1,9 +1,6 @@
 # -------------------------------------------------------------------------
 # Testprogram for Pimoroni's InkyFrame-5.7"
 #
-# This program is an adaption of Adafruit's uc8151d_simpletest.py from
-# https://github.com/adafruit/Adafruit_CircuitPython_UC8151D
-#
 # Author: Bernhard Bablok
 # License: GPL3
 #
@@ -18,10 +15,13 @@ BUILTIN=True
 import time
 import board
 import displayio
+import digitalio
 import terminalio
 import bitmaptools
 import busio
 import storage
+import adafruit_sdcard
+import keypad
 from adafruit_display_text.bitmap_label import Label
 from adafruit_display_shapes.rect import Rect
 from digitalio import DigitalInOut, Direction
@@ -30,21 +30,28 @@ import gc
 LED_TIME = 0.5
 TESTS = [
   "show_colors",
-  #"blink_leds"
+  "show_image",
+  "blink_leds",
+  "use_buttons"
   ]
 
-# pinout for Pimoroni InkyFrame
-SCK_PIN   = board.SCK
+# pinout for Pimoroni InkyFrame (first group necessary if not builtin)
+SCK_PIN   = board.SCLK
 MOSI_PIN  = board.MOSI
 MISO_PIN  = board.MISO
 DC_PIN    = board.INKY_DC
-RST_PIN   = board.INKY_RST
-CS_PIN_SD = board.SD_CS
+RST_PIN   = board.INKY_RES
 CS_PIN_D  = board.INKY_CS
+
+CS_PIN_SD = board.SD_CS
 BUSY_PIN  = None
+SR_CLOCK  = board.SWITCH_CLK
+SR_LATCH  = board.SWITCH_LATCH
+SR_DATA   = board.SWITCH_OUT
 
 if BUILTIN:
   display = board.DISPLAY
+  spi     = board.SPI()
 else:
   import adafruit_spd1656
   displayio.release_displays()
@@ -72,10 +79,24 @@ for pin in pin_led:
 # --- update display   -------------------------------------------------
 
 def update_display():
+  start = time.monotonic()
   display.show(g)
-  print("refreshing...: ",int(time.monotonic()))
+  duration = time.monotonic()-start
+  print(f"update_display (show): {duration:f}s")
+
+  print("refreshing...: ")
+  print(f"time-to-refresh: {display.time_to_refresh}")
+  time.sleep(display.time_to_refresh)
+  start = time.monotonic()
   display.refresh()
-  print("...done: ",int(time.monotonic()))
+  duration = time.monotonic()-start
+  print(f"update_display (refreshed): {duration:f}s")
+
+  update_time = display.time_to_refresh - duration
+  if update_time > 0.0:
+    print(f"update-time: {update_time}")
+    time.sleep(update_time)
+
   for i in range(len(g)):
     g.pop()
 
@@ -126,17 +147,48 @@ def show_colors():
 
 def show_image():
 
-  cs = digitalio.DigitalInOut(CS_PIN)
+  cs = digitalio.DigitalInOut(CS_PIN_SD)
   sdcard = adafruit_sdcard.SDCard(spi,cs)
   vfs = storage.VfsFat(sdcard)
   storage.mount(vfs, "/sd")
 
-  f = open("/sd/display-ruler-720p.bmp", "rb")
+  f = open("/sd/display-ruler-600x448.bmp", "rb")
   pic = displayio.OnDiskBitmap(f)
   t = displayio.TileGrid(pic, pixel_shader=pic.pixel_shader)
   g.append(t)
-  f.close()
   update_display()
+  f.close()
+
+# --- use buttons   -----------------------------------------------------
+
+def use_buttons():
+
+  shift_reg = keypad.ShiftRegisterKeys(
+    clock = SR_CLOCK,
+    data  = SR_DATA,
+    latch = SR_LATCH,
+    key_count = 8,
+    value_to_latch = True,
+    value_when_pressed = True
+    )
+
+  queue = shift_reg.events
+  queue.clear()
+  print("press any button:")
+  while True:
+    if not len(queue):
+      time.sleep(0.1)
+      continue
+    ev = queue.get()
+    if ev.key_number == board.KEYCODES.SW_A:    # only to test board.KEYCODES
+      print(f"pressed SW_A")
+    key_nr = 7 - ev.key_number                  # bit order reversed compared
+    if ev.pressed and key_nr < 5:               # to schematic
+      led = leds[key_nr]
+      led.value = 1
+      time.sleep(LED_TIME)
+      led.value = 0
+      time.sleep(LED_TIME)
 
 # --- main program   ----------------------------------------------------
 
@@ -145,6 +197,7 @@ for tst in [globals()[fkt] for fkt in TESTS]:
   tst()
   gc.collect()
   print(f"finished: {tst}",int(time.monotonic()))
+  time.sleep(10)
 
 while True:
   time.sleep(5)
