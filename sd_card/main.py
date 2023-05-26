@@ -16,7 +16,7 @@
 #
 # -------------------------------------------------------------------------
 
-BULK       = True
+BULK       = False
 DURATION   = { False: 30, True: 30 }  # duration depending on BULK
 BULK_COUNT = 1000
 
@@ -28,8 +28,15 @@ import digitalio
 import microcontroller
 import storage
 
-SD_CS   = board.TX      # default CS pin for the microSD bff is TX
-SD_SCK  = board.SCK
+# microSD BFF + XIAO-board
+#SD_CS   = board.TX      # default CS pin for the microSD bff is TX
+#SD_SCK  = board.SCK
+#SD_MOSI = board.MOSI
+#SD_MISO = board.MISO
+
+# integrated microSD in pico-pi-base-rev2
+SD_CS   = board.SD_CS
+SD_SCK  = board.SCLK
 SD_MOSI = board.MOSI
 SD_MISO = board.MISO
 
@@ -88,3 +95,7 @@ else:
 # - xiaio-nrf52840, CP 8.0.5:
 #   - single: 0.027 (30/1115)
 #   - bulk:   0.002 (30/14000)
+#
+# - pico-pi-base, CP 8.1.0-beta2:
+#   - single: 0.028 (30/1070)
+#   - bulk:   0.003 (30/9000)
