@@ -8,7 +8,10 @@
 #
 # -------------------------------------------------------------------------
 
-BUILTIN=True
+SIZE=(640,400)  # InkyFrame 4"
+#SIZE=(600,448)  # InkyFrame 5.7"
+
+BUILTIN=False
 
 # pylint: disable=no-member
 
@@ -27,31 +30,45 @@ from adafruit_display_shapes.rect import Rect
 from digitalio import DigitalInOut, Direction
 import gc
 
-LED_TIME = 0.5
-TESTS = [
-  "show_colors",
-  "show_image",
-  "blink_leds",
-  "use_buttons"
-  ]
-
 # pinout for Pimoroni InkyFrame (first group necessary if not builtin)
 SCK_PIN   = board.SCLK
 MOSI_PIN  = board.MOSI
 MISO_PIN  = board.MISO
-DC_PIN    = board.INKY_DC
-RST_PIN   = board.INKY_RES
-CS_PIN_D  = board.INKY_CS
 
-CS_PIN_SD = board.SD_CS
+BUSY_PIN  = board.GPIO17
 BUSY_PIN  = None
-SR_CLOCK  = board.SWITCH_CLK
-SR_LATCH  = board.SWITCH_LATCH
-SR_DATA   = board.SWITCH_OUT
+DC_PIN    = board.GPIO22
+RST_PIN   = board.GPIO27
+CS_PIN_D  = board.CE0
+
 
 if BUILTIN:
   display = board.DISPLAY
   spi     = board.SPI()
+  CS_PIN_SD = board.SD_CS
+  SR_CLOCK  = board.SWITCH_CLK
+  SR_LATCH  = board.SWITCH_LATCH
+  SR_DATA   = board.SWITCH_OUT
+  pin_led = [board.LED_A, board.LED_B, board.LED_C, board.LED_D, board.LED_E,
+             board.LED_ACT, board.LED_CONN
+             ]
+
+  LED_TIME = 0.5
+
+  leds = []
+  for pin in pin_led:
+    led = DigitalInOut(pin)
+    led.direction = Direction.OUTPUT
+    leds.append(led)
+
+  TESTS = [
+    "show_colors_v",
+    "show_colors_h",
+    "show_image",
+    "blink_leds",
+    "use_buttons"
+  ]
+
 else:
   import adafruit_spd1656
   displayio.release_displays()
@@ -60,21 +77,28 @@ else:
     spi, command=DC_PIN, chip_select=CS_PIN_D, reset=RST_PIN, baudrate=1000000
   )
   display = adafruit_spd1656.SPD1656(display_bus,busy_pin=BUSY_PIN,
-                                     width=600,height=448,rotation=180,
-                                     refresh_time=2)
+                                     width=SIZE[0],height=SIZE[1],
+                                     refresh_time=2,seconds_per_frame=40)
 
   display.auto_refresh = False
+
+  TESTS = [
+    "show_colors_v",
+    "show_colors_h"
+  ]
+
+
+
 g = displayio.Group()
 
-pin_led = [board.LED_A, board.LED_B, board.LED_C, board.LED_D, board.LED_E,
-           board.LED_ACT, board.LED_CONN
-           ]
-
-leds = []
-for pin in pin_led:
-  led = DigitalInOut(pin)
-  led.direction = Direction.OUTPUT
-  leds.append(led)
+palette = displayio.Palette(7)
+palette[0] = 0xFFFFFF
+palette[1] = 0x000000
+palette[2] = 0x0000FF
+palette[3] = 0x00FF00
+palette[4] = 0xFF0000
+palette[5] = 0xFFFF00
+palette[6] = 0xFFA500
 
 # --- update display   -------------------------------------------------
 
@@ -118,26 +142,33 @@ def blink_leds():
     led.value = 0
   time.sleep(LED_TIME)
 
-# --- colors and texts   -----------------------------------------------
+# --- colors and texts (vertical)   ------------------------------------------
 
-def show_colors():
-  p = displayio.Palette(7)
-  p[0] = 0xFFFFFF
-  p[1] = 0x000000
-  p[2] = 0x0000FF
-  p[3] = 0x00FF00
-  p[4] = 0xFF0000
-  p[5] = 0xFFFF00
-  p[6] = 0xFFA500
+def show_colors_v():
+  stripe_width = display.width // 7
+  for i in range(7):
+    rect = Rect(x=i*stripe_width,y=0,
+                width=stripe_width,height=display.height,
+                fill=palette[i],outline=None,stroke=0)
+    g.append(rect)
 
+  lbl = Label(terminalio.FONT, text='InkyFrame', color=0xFFFFFF, scale=3)
+  lbl.anchor_point = (0.5, 0.5)
+  lbl.anchored_position = (display.width // 2, display.height // 3)
+  g.append(lbl)
+  update_display()
+
+# --- colors and texts (horizontal)   ----------------------------------------
+
+def show_colors_h():
   stripe_height = display.height // 7
   for i in range(7):
     rect = Rect(x=0,y=i*stripe_height,
                 width=display.width,height=stripe_height,
-                fill=p[i],outline=None,stroke=0)
+                fill=palette[i],outline=None,stroke=0)
     g.append(rect)
 
-  lbl = Label(terminalio.FONT, text='InkyFrame 5.7"', color=0xFFFFFF, scale=3)
+  lbl = Label(terminalio.FONT, text='InkyFrame', color=0xFFFFFF, scale=3)
   lbl.anchor_point = (0.5, 0.5)
   lbl.anchored_position = (display.width // 2, display.height // 2)
   g.append(lbl)
