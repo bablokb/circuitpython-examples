@@ -35,10 +35,16 @@ import storage
 #SD_MISO = board.MISO
 
 # integrated microSD in pico-pi-base-rev2
-SD_CS   = board.SD_CS
-SD_SCK  = board.SCLK
-SD_MOSI = board.MOSI
-SD_MISO = board.MISO
+#SD_CS   = board.SD_CS
+#SD_SCK  = board.SCLK
+#SD_MOSI = board.MOSI
+#SD_MISO = board.MISO
+
+# pico with SPI1
+SD_CS    = board.GP13
+SD_SCK   = board.GP14
+SD_MOSI  = board.GP15
+SD_MISO  = board.GP12
 
 # --- single-logging   ------------------------------------------------------
 
@@ -54,6 +60,7 @@ def run_single():
       f.write(f"{data}\n")
     last = now
     i += 1
+  return i
 
 # --- bulk-logging   ------------------------------------------------------
 
@@ -72,19 +79,24 @@ def run_bulk():
         i += 1
         if i % BULK_COUNT == 1:
           break
+  return i
 
 # --- main program   ---------------------------------------------------------
 
+start  = time.monotonic()
 spi    = busio.SPI(SD_SCK,SD_MOSI,SD_MISO)
 cs     = digitalio.DigitalInOut(SD_CS)
 sdcard = adafruit_sdcard.SDCard(spi,cs)
 vfs    = storage.VfsFat(sdcard)
 storage.mount(vfs, "/sd")
+print(f"mount:  {time.monotonic()-start:0.3f}s")
 
 if BULK:
-  run_bulk()
+  count = run_bulk()
+  print(f"bulk:   {DURATION[BULK]/count:0.3f}s")
 else:
-  run_single()
+  count = run_single()
+  print(f"single: {DURATION[BULK]/count:0.3f}s")
 
 # results:
 #
