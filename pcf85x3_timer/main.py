@@ -11,6 +11,7 @@
 # On a PCF8523, you can search&replace timerA with timerB to test the
 # second timer (the PCF8563 only has a single timer).
 #
+# Test0: check alarm-flag 
 # Test1: low-frequency timer, checking timer-flag
 # Test2: low-frequency timer, checking interrupt-pin
 # Test3: high-frequency timer, counting timer-flag
@@ -29,32 +30,42 @@ from digitalio import DigitalInOut, Direction, Pull
 import busio
 
 # imports for PCF8523
-#from adafruit_pcf8523 import PCF8523 as PCF_RTC
-
-# imports for PCF8563
-from adafruit_pcf8563.pcf8563 import PCF8563 as PCF_RTC
+from adafruit_pcf8523.pcf8523 import PCF8523 as PCF_RTC
 from adafruit_pcf8563.timer import Timer
 from adafruit_pcf8563.clock import Clock
+
+# imports for PCF8563
+#from adafruit_pcf8563.pcf8563 import PCF8563 as PCF_RTC
+#from adafruit_pcf8563.timer import Timer
+#from adafruit_pcf8563.clock import Clock
 
 # imports for PCF85063A
 #from pcf85063a import PCF85063A as PCF_RTC
 
 # --- configuration   --------------------------------------------------------
 
-# pico left sinde
+# pico left side
 PIN_SDA  = board.GP2   # connect to RTC
 PIN_SCL  = board.GP3   # connect to RTC
 PIN_INT  = board.GP5   # for PCF8523/PCF8563
-PIN_COUT = board.GP7   # for PCF8563
+#PIN_COUT = board.GP7   # for PCF8563
+PIN_COUT = board.GP5   # for PCF8523
 
 # pico right side
-PIN_SDA  = board.GP26   # connect to RTC
-PIN_SCL  = board.GP27   # connect to RTC
-PIN_INT  = board.GP22   # for PCF8523/PCF8563
-PIN_COUT = board.GP21   # for PCF8563
+#PIN_SDA  = board.GP26   # connect to RTC
+#PIN_SCL  = board.GP27   # connect to RTC
+#PIN_INT  = board.GP22   # for PCF8523/PCF8563
+#PIN_COUT = board.GP21   # for PCF8563
+#PIN_COUT = board.GP22   # for PCF8523
 
 INT_ACT  = 0           # interrupt is active-low
-TESTS=[1,2,3,4,5]      # pico
+TESTS=[0,1,2,3,4,5]    # pico
+TESTS=[1]              # pico
+
+#Probleme: 1: passiert nichts
+#Probleme: 2: falsche Zeiten: 0.001 statt 10
+#Probleme: 3: passiert nichts
+#Probleme: 4: falsche Zeiten: 0.001 statt 0.02
 
 # XIAO RP2040 with expansion board and RTC8563
 #PIN_SDA  = board.SDA   # connect to RTC
@@ -206,15 +217,20 @@ def test0():
 def test1():
   """ Test1: low-frequency timer, checking timer-flag """
   print(f"running test1 (timer flag): delay: {DELAY_TIME_LOW}")
+  timer.timer_conf   = 0b1         # note: PCF8563: 1 bit, PCF8523: 2 bits
+  timer.timer_status    = False
   set_timer(DELAY_TIME_LOW)
+  print(f"{timer.timer_frequency=} ({timer.timer_frequency:#b})")
   for n in range(REPEAT_LOW):
     start = time.monotonic()
-    timer.timer_enabled = True
+    timer.timer_conf = 0b1            # note: PCF8563: 1 bit, PCF8523: 2 bits
+    print(f"{timer.timer_conf=} ({timer.timer_conf:#b})")
     while not timer.timer_status:
-      pass
+      print(f"waiting... (rest: {timer.timer_value})")
+      time.sleep(1)
     # timer fired, reset and blink
     elapsed = time.monotonic() - start
-    timer.timer_enabled = False
+    timer.timer_conf = 0
     timer.timer_status  = False
     print(f"elapsed: {elapsed}")
     blink()
@@ -224,18 +240,18 @@ def test1():
 def test2():
   """ Test2: low-frequency timer, checking interrupt-pin """
   print(f"running test2 (interrupt): delay: {DELAY_TIME_LOW}")
-  timer.timer_enabled   = False
+  timer.timer_enabled   = 0
   timer.timer_status    = False
   set_timer(DELAY_TIME_LOW)
   timer.timer_interrupt = True
   for n in range(REPEAT_LOW):
     start = time.monotonic()
-    timer.timer_enabled   = True
+    timer.timer_enabled   = 1
     while intpin.value != INT_ACT:
       pass
     # timer fired, reset and blink
     elapsed = time.monotonic() - start
-    timer.timer_enabled   = False
+    timer.timer_enabled   = 0
     timer.timer_status    = False
     print(f"elapsed: {elapsed}")
     blink()
@@ -250,7 +266,7 @@ def test3():
     counter = 0
     start = time.monotonic()
     end   = start + DURATION_TIME_HIGH
-    timer.timer_enabled   = True
+    timer.timer_enabled   = 1
     while time.monotonic() < end:          # run for (at least) test-period
       while not timer.timer_status:
         pass
@@ -258,7 +274,7 @@ def test3():
       timer.timer_status = False
       counter += 1
     mean_delay = (time.monotonic()-start)/counter
-    timer.timer_enabled = False
+    timer.timer_enabled = 0
     print(f"delay requested: {DELAY_TIME_HIGH}")
     print(f"delay observed:  {mean_delay} (mean of {counter} alarms)")
 
@@ -273,7 +289,7 @@ def test4():
     counter = 0
     start = time.monotonic()
     end   = start + DURATION_TIME_HIGH
-    timer.timer_enabled   = True
+    timer.timer_enabled   = 1
     while time.monotonic() < end:          # run for (at least) test-period
       while intpin.value != INT_ACT:
         pass
@@ -281,7 +297,7 @@ def test4():
       timer.timer_status = False
       counter += 1
     mean_delay = (time.monotonic()-start)/counter
-    timer.timer_enabled = False
+    timer.timer_enabled = 0
     print(f"delay requested: {DELAY_TIME_HIGH}")
     print(f"delay observed:  {mean_delay} (mean of {counter} alarms)")
 
@@ -293,6 +309,7 @@ def test5():
 
   # PCF8523 share INT and CLKOUT, so disable interrupt and reset pin
   timer.timer_interrupt = False
+  timer.timer_enabled = 0
   intpin.deinit()
 
   counter = countio.Counter(pin=PIN_COUT,edge=countio.Edge.RISE,
@@ -315,11 +332,13 @@ if (hasattr(rtc,"datetime_compromised") and rtc.datetime_compromised or
   rtc.datetime = time.struct_time((2023,1,1, 12,0,0, 6,1,-1))
 
 # Configure RTC
-timer.timer_enabled     = False
+disable_clkout()
+timer.timer_conf     = 0
 timer.timer_interrupt   = False
 timer.timer_status      = False
 timer.timer_pulsed      = False
-disable_clkout()
+
+print(f"{rtc.lost_power=}")
 
 # execute tests
 for tst in [globals()[f"test{i}"] for i in TESTS]:
