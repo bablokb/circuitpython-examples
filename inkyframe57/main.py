@@ -1,5 +1,5 @@
 # -------------------------------------------------------------------------
-# Testprogram for Pimoroni's InkyFrame-5.7"
+# Testprogram for Pimoroni's InkyImpression/InkyFrame displays
 #
 # Author: Bernhard Bablok
 # License: GPL3
@@ -8,10 +8,8 @@
 #
 # -------------------------------------------------------------------------
 
-SIZE=(640,400)  # InkyFrame 4"
-#SIZE=(600,448)  # InkyFrame 5.7"
-
-BUILTIN=False
+INKY = "InkyFrame-5.7"
+INKY = "InkyImpression-4"
 
 # pylint: disable=no-member
 
@@ -30,17 +28,33 @@ from adafruit_display_shapes.rect import Rect
 from digitalio import DigitalInOut, Direction
 import gc
 
-# pinout for Pimoroni InkyFrame (first group necessary if not builtin)
-SCK_PIN   = board.SCLK
-MOSI_PIN  = board.MOSI
-MISO_PIN  = board.MISO
+# pinouts (first block uses pico-zero-base adapter)
 
-BUSY_PIN  = board.GPIO17
-BUSY_PIN  = None
-DC_PIN    = board.GPIO22
-RST_PIN   = board.GPIO27
-CS_PIN_D  = board.CE0
-
+if INKY == "InkyImpression-4":
+  SIZE=(640,400)
+  BUILTIN = False
+  SCK_PIN   = board.SCLK
+  MOSI_PIN  = board.MOSI
+  MISO_PIN  = board.MISO
+  BUSY_PIN  = board.GPIO17
+  BUSY_PIN  = None
+  DC_PIN    = board.GPIO22
+  RST_PIN   = board.GPIO27
+  CS_PIN_D  = board.CE0
+  TESTS = [
+    "show_colors_v",
+    "show_colors_h"
+    ]
+elif INKY == "InkyFrame-5.7":
+  SIZE=(600,448)
+  BUILTIN=True
+  TESTS = [
+    "show_colors_v",
+    "show_colors_h",
+    "show_image",
+    "blink_leds",
+    "use_buttons"
+  ]
 
 if BUILTIN:
   display = board.DISPLAY
@@ -52,22 +66,12 @@ if BUILTIN:
   pin_led = [board.LED_A, board.LED_B, board.LED_C, board.LED_D, board.LED_E,
              board.LED_ACT, board.LED_CONN
              ]
-
   LED_TIME = 0.5
-
   leds = []
   for pin in pin_led:
     led = DigitalInOut(pin)
     led.direction = Direction.OUTPUT
     leds.append(led)
-
-  TESTS = [
-    "show_colors_v",
-    "show_colors_h",
-    "show_image",
-    "blink_leds",
-    "use_buttons"
-  ]
 
 else:
   import adafruit_spd1656
@@ -79,18 +83,9 @@ else:
   display = adafruit_spd1656.SPD1656(display_bus,busy_pin=BUSY_PIN,
                                      width=SIZE[0],height=SIZE[1],
                                      refresh_time=2,seconds_per_frame=40)
-
   display.auto_refresh = False
 
-  TESTS = [
-    "show_colors_v",
-    "show_colors_h"
-  ]
-
-
-
 g = displayio.Group()
-
 palette = displayio.Palette(7)
 palette[0] = 0xFFFFFF
 palette[1] = 0x000000
@@ -152,7 +147,7 @@ def show_colors_v():
                 fill=palette[i],outline=None,stroke=0)
     g.append(rect)
 
-  lbl = Label(terminalio.FONT, text='InkyFrame', color=0xFFFFFF, scale=3)
+  lbl = Label(terminalio.FONT, text=INKY, color=0xFFFFFF, scale=3)
   lbl.anchor_point = (0.5, 0.5)
   lbl.anchored_position = (display.width // 2, display.height // 3)
   g.append(lbl)
@@ -168,7 +163,7 @@ def show_colors_h():
                 fill=palette[i],outline=None,stroke=0)
     g.append(rect)
 
-  lbl = Label(terminalio.FONT, text='InkyFrame', color=0xFFFFFF, scale=3)
+  lbl = Label(terminalio.FONT, text=INKY, color=0xFFFFFF, scale=3)
   lbl.anchor_point = (0.5, 0.5)
   lbl.anchored_position = (display.width // 2, display.height // 2)
   g.append(lbl)
