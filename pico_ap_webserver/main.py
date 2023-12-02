@@ -51,7 +51,7 @@ class WebAP:
 
     wifi.radio.stop_station()
 
-    self.msg(f"starting AP with ssid {self._config["ssid"]}")
+    self.msg(f"starting AP with ssid {self._config['ssid']}")
     if (self._config["auth_modes"][0] == wifi.AuthMode.OPEN):
       wifi.radio.start_ap(ssid=self._config["ssid"],
                           authmode=[wifi.AuthMode.OPEN])
@@ -60,7 +60,7 @@ class WebAP:
       wifi.radio.start_ap(ssid=self._config["ssid"],
                           password=self._config["password"],
                           authmode=self._config["auth_modes"])
-      self.msg(f"password: {self._config["password"]}")
+      self.msg(f"password: {self._config['password']}")
 
   # --- start web-server   ----------------------------------------------------
 
