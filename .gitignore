@@ -6,3 +6,4 @@ test
 lib
 *secrets.py
 boot_out.txt
+.*

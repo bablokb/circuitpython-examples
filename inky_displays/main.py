@@ -9,7 +9,7 @@
 # -------------------------------------------------------------------------
 
 INKY = "InkyFrame-5.7"
-INKY = "InkyImpression-4"
+#INKY = "InkyImpression-4"
 
 # pylint: disable=no-member
 
@@ -99,7 +99,7 @@ palette[6] = 0xFFA500
 
 def update_display():
   start = time.monotonic()
-  display.show(g)
+  display.root_group = g
   duration = time.monotonic()-start
   print(f"update_display (show): {duration:f}s")
 
@@ -111,10 +111,8 @@ def update_display():
   duration = time.monotonic()-start
   print(f"update_display (refreshed): {duration:f}s")
 
-  update_time = display.time_to_refresh - duration
-  if update_time > 0.0:
-    print(f"update-time: {update_time}")
-    time.sleep(update_time)
+  print(f"time-to-refresh: {display.time_to_refresh}")
+  time.sleep(display.time_to_refresh)
 
   for i in range(len(g)):
     g.pop()
