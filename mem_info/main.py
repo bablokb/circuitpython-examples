@@ -9,5 +9,4 @@
 # -------------------------------------------------------------------------
 
 import gc
-
-print("free: %s" % gc.mem_free())
+print(f"free memory at start: {gc.mem_free()}")
