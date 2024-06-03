@@ -78,6 +78,25 @@ text_area = label.Label(terminalio.FONT, text=text, color=0xFFFFFF)
 text_group.append(text_area)  # Subgroup for text scaling
 splash.append(text_group)
 
+time.sleep(3)
+
+# remove existing objects
+del text_group[0]
+for i in range(len(splash)):
+  splash.pop(0)
+
+# add image
+with open("/RPG-480x320.bmp", "rb") as f:
+  pic = displayio.OnDiskBitmap(f)
+  t = displayio.TileGrid(pic, pixel_shader=pic.pixel_shader)
+  splash.append(t)
+
+  print("finished!")
+  print("press CTRL-C")
+  while True:
+    time.sleep(0.1)
+
+
 print("finished!")
 print("press CTRL-C")
 while True:
