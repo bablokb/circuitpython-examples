@@ -1,6 +1,3 @@
-# TODOs board-definition:
-#   - add gamma-commands
-
 # -------------------------------------------------------------------------
 # Testprogram for Sunton-ESP32-2432S032C 3.2"-display.
 #   - board.DISPLAY (320x240)
@@ -135,6 +132,7 @@ def touch():
 
 def blink_led():
   import adafruit_rgbled
+  import adafruit_fancyled.adafruit_fancyled as fancy
   COLORS = [
     ("WHITE",   0xFFFFFF), ("BLACK",   0x000000),
     ("RED",     0xFF0000), ("LIME",    0x00FF00),
@@ -145,13 +143,17 @@ def blink_led():
     ("OLIVE",   0x808000), ("TEAL",    0x008080),
     ("PURPLE",  0x800080), ("SILVER",  0xC0C0C0)]
 
+  colors_adj = fancy.gamma_adjust(
+    [fancy.unpack(color[1]) for color in COLORS],
+    gamma_value=2.2, brightness=0.25)
   with adafruit_rgbled.RGBLED(
     board.LED_RED, board.LED_GREEN, board.LED_BLUE, invert_pwm = True) as led:
-    for color in COLORS:
+    for index, color in enumerate(colors_adj):
       if not button.value:
         break
-      print(f"setting LED color to {color[0]}")
-      led.color = color[1]
+      color = color.pack()
+      print(f"setting LED color to {COLORS[index][0]} {color:#08x}")
+      led.color = color
       time.sleep(3)
 
     print(f"turning LED off")
