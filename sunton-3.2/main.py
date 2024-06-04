@@ -262,25 +262,43 @@ def load_image():
 # --- audio   ----------------------------------------------------------------
 
 def audio():
-  """ example-code from Cytron:
-  https://www.cytron.io/tutorial/buzzer-unorp2040-circuitpython
+  """ code adapted from:
+  https://blog.wokwi.com/play-musical-notes-on-circuitpython/
   """
   import simpleio
+  PITCHES = "c,c#,d,d#,e,f,f#,g,g#,a,a#,b".split(",")
+  def get_freq(name):
+    octave = int(name[-1])
+    pitch = PITCHES.index(name[:-1].lower())
+    return 440 * 2 ** ((octave - 4) + (pitch - 9) / 12.)
 
-  MELODY_NOTE = [659, 659, 0,   659, 0,    523, 659, 0,    784]
-  #             [E5,  E5, REST, E5,  REST, C5,  E5,  REST, G5]
-  MELODY_DURATION = [0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.2]
+  def play_jingle():
+    sequence = [
+      ("e5", 2), ("e5", 2), ("e5", 4), ("e5", 2), ("e5", 2), ("e5", 4),
+      ("e5", 2), ("g5", 2), ("c5", 4), ("d5", 1), ("e5", 6), (None, 2),
+      ("f5", 2), ("f5", 2), ("f5", 3), ("f5", 1), ("f5", 2), ("e5", 2),
+      ("e5", 2), ("e5", 1), ("e5", 1), ("e5", 2), ("d5", 2), ("d5", 2),
+      ("e5", 2), ("d5", 4), ("g5", 2), (None, 2),
+      ("e5", 2), ("e5", 2), ("e5", 4), ("e5", 2), ("e5", 2), ("e5", 4),
+      ("e5", 2), ("g5", 2), ("c5", 4), ("d5", 1), ("e5", 6), (None, 2),
+      ("f5", 2), ("f5", 2), ("f5", 3), ("f5", 1), ("f5", 2), ("e5", 2),
+      ("e5", 2), ("e5", 1), ("e5", 1), ("g5", 2), ("g5", 2), ("f5", 2),
+      ("d5", 2), ("c5", 6), (None, 2)
+      ]
+
+    for (notename, eigths) in sequence:
+      if not button.value:
+        return True
+      length = eigths * 0.1
+      if notename:
+        simpleio.tone(board.SPEAKER,get_freq(notename),length)
+      else:
+        time.sleep(length)
+    return False
 
   while True:
-    if not button.value:
+    if play_jingle():
       return
-    for i in range(len(MELODY_DURATION)):
-      if not MELODY_NOTE[i]:
-        time.sleep(MELODY_DURATION[i])
-      else:
-        simpleio.tone(board.SPEAKER,
-                      MELODY_NOTE[i],
-                      duration=MELODY_DURATION[i])
     time.sleep(0.5)
 
 # --- main program   ---------------------------------------------------------
