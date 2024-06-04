@@ -26,14 +26,14 @@
 # -------------------------------------------------------------------------
 
 TESTS = [
-  "show_colors",
-  "backlight",
-  "blink_led",
-  "touch",
+  #"show_colors",
+  #"backlight",
+  #"blink_led",
+  #"touch",
   # "lightsensor",
   # "aht20",            # test I2C
-  "load_image",
-  # "audio",
+  #"load_image",
+  "audio",
   # "light_sleep_time",
   # "light_sleep_pin",
   # "deep_sleep_time",
@@ -259,19 +259,44 @@ def load_image():
   test_group.append(tile)
   display.refresh()
 
+# --- audio   ----------------------------------------------------------------
+
+def audio():
+  """ example-code from Cytron:
+  https://www.cytron.io/tutorial/buzzer-unorp2040-circuitpython
+  """
+  import simpleio
+
+  MELODY_NOTE = [659, 659, 0,   659, 0,    523, 659, 0,    784]
+  #             [E5,  E5, REST, E5,  REST, C5,  E5,  REST, G5]
+  MELODY_DURATION = [0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.2]
+
+  while True:
+    if not button.value:
+      return
+    for i in range(len(MELODY_DURATION)):
+      if not MELODY_NOTE[i]:
+        time.sleep(MELODY_DURATION[i])
+      else:
+        simpleio.tone(board.SPEAKER,
+                      MELODY_NOTE[i],
+                      duration=MELODY_DURATION[i])
+    time.sleep(0.5)
+
 # --- main program   ---------------------------------------------------------
 
-time.sleep(3)
 print(f"Starting tests for {board.board_id}")
 print("interrupt a test by pressing the button")
 for tst in [(fkt,globals()[fkt]) for fkt in TESTS]:
+  time.sleep(3)
   tst_name.text = tst[0]
   display.refresh()
   print(f"running test: {tst[0]}")
   tst[1]()
   print(f"finished: {tst[0]}")
-  time.sleep(5)
 
+tst_name.text = "finished!"
+display.refresh()
 print("all tests finished since...")
 start = int(time.monotonic())
 while True:
