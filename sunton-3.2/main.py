@@ -218,6 +218,7 @@ def lightsensor():
 # --- i2-device   ------------------------------------------------------------
 
 def aht20():
+  clear_display()
   import adafruit_ahtx0
   aht20 = adafruit_ahtx0.AHTx0(board.I2C())
 
