@@ -30,9 +30,14 @@ TESTS = [
   "backlight",
   "blink_led",
   "touch",
-  "lightsensor",
-  "aht20",            # test I2C
-  "load_image"
+  # "lightsensor",
+  # "aht20",            # test I2C
+  "load_image",
+  # "audio",
+  # "light_sleep_time",
+  # "light_sleep_pin",
+  # "deep_sleep_time",
+  # "deep_sleep_pin",
   ]
 SD_FILENAME = "/sd/colors-320x240.bmp"
 
@@ -52,14 +57,23 @@ button = DigitalInOut(board.BUTTON)
 button.switch_to_input(pull=Pull.UP)
 
 display = board.DISPLAY
-g = displayio.Group()
-display.root_group = g
+display.auto_refresh = False
+main_group = displayio.Group()
+display.root_group = main_group
+test_group = displayio.Group()
+main_group.append(test_group)
+
+tst_name = Label(terminalio.FONT, text=board.board_id, color=0xFFFFFF, scale=2)
+tst_name.anchor_point = (0.5, 0.0)
+tst_name.anchored_position = (display.width//2,5)
+main_group.append(tst_name)
+display.refresh()
 
 # --- clear display   --------------------------------------------------------
 
 def clear_display():
-  for i in range(len(g)):
-    g.pop()
+  for i in range(len(test_group)):
+    test_group.pop()
   gc.collect()
 
 # --- colors and texts (vertical)   ------------------------------------------
@@ -81,12 +95,13 @@ def show_colors():
         rect = Rect(x=i*stripe_width,y=0,
                 width=stripe_width,height=display.height,
                 fill=color,outline=None,stroke=0)
-        g.append(rect)
+        test_group.append(rect)
 
   lbl = Label(terminalio.FONT, text=board.board_id, color=0xFFFFFF, scale=2)
   lbl.anchor_point = (0.5, 0.5)
-  lbl.anchored_position = (display.width // 2, display.height // 3)
-  g.append(lbl)
+  lbl.anchored_position = (display.width//2,display.height//2)
+  test_group.append(lbl)
+  display.refresh()
 
 # --- backlight test   -------------------------------------------------------
 
@@ -206,11 +221,10 @@ def aht20():
   import adafruit_ahtx0
   aht20 = adafruit_ahtx0.AHTx0(board.I2C())
 
-  clear_display()
   lbl = Label(terminalio.FONT, text="", color=0x00FFFF, scale=2)
   lbl.anchor_point = (0.5, 0.5)
-  lbl.anchored_position = (display.width // 2, display.height // 3)
-  g.append(lbl)
+  lbl.anchored_position = (display.width//2, display.height//2)
+  test_group.append(lbl)
 
   while True:
     if not button.value:
@@ -219,12 +233,14 @@ def aht20():
     h = round(aht20.relative_humidity,0)
     text = f"{t:0.1f}C  {h:0.0f}%"       # terminalio.FONT has no '°'
     lbl.text = text
+    display.refresh()
     print(text)
     time.sleep(5)
 
 # --- load image from SD-card   ----------------------------------------------
 
 def load_image():
+  clear_display()
   import os, storage, sdcardio
   try:
     os.mkdir("/sd")
@@ -239,14 +255,17 @@ def load_image():
   bmp  = displayio.OnDiskBitmap(img_file)
   tile = displayio.TileGrid(bmp,pixel_shader=displayio.ColorConverter())
 
-  clear_display()
-  g.append(tile)
+  test_group.append(tile)
+  display.refresh()
 
 # --- main program   ---------------------------------------------------------
 
+time.sleep(3)
 print(f"Starting tests for {board.board_id}")
 print("interrupt a test by pressing the button")
 for tst in [(fkt,globals()[fkt]) for fkt in TESTS]:
+  tst_name.text = tst[0]
+  display.refresh()
   print(f"running test: {tst[0]}")
   tst[1]()
   print(f"finished: {tst[0]}")
