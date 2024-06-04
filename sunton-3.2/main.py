@@ -30,8 +30,8 @@ TESTS = [
   "backlight",
   "blink_led",
   "touch",
-#  "lightsensor",
-#  "i2c_device",       # uses AHT20
+  "lightsensor",
+  "aht20",            # test I2C
   "load_image"
   ]
 SD_FILENAME = "/sd/colors-320x240.bmp"
@@ -101,7 +101,8 @@ def backlight():
       print(f"{display.brightness=}")
     time.sleep(0.1)
 
-  time.sleep(1)
+  time.sleep(5)
+
   print("fading in...")
   for b in range(0,101):
     if not button.value:
@@ -204,13 +205,22 @@ def lightsensor():
 def aht20():
   import adafruit_ahtx0
   aht20 = adafruit_ahtx0.AHTx0(board.I2C())
+
+  clear_display()
+  lbl = Label(terminalio.FONT, text="", color=0x00FFFF, scale=2)
+  lbl.anchor_point = (0.5, 0.5)
+  lbl.anchored_position = (display.width // 2, display.height // 3)
+  g.append(lbl)
+
   while True:
     if not button.value:
       return
     t = round(aht20.temperature,1)
     h = round(aht20.relative_humidity,0)
-    print(f"{t:0.1f},{h:0.0f}")
-    time.sleep(1)
+    text = f"{t:0.1f}C  {h:0.0f}%"       # terminalio.FONT has no '°'
+    lbl.text = text
+    print(text)
+    time.sleep(5)
 
 # --- load image from SD-card   ----------------------------------------------
 
@@ -240,7 +250,7 @@ for tst in [(fkt,globals()[fkt]) for fkt in TESTS]:
   print(f"running test: {tst[0]}")
   tst[1]()
   print(f"finished: {tst[0]}")
-  time.sleep(10)
+  time.sleep(5)
 
 print("all tests finished since...")
 start = int(time.monotonic())
