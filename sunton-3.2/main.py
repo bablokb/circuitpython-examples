@@ -17,6 +17,11 @@
 #     copy this file to a SD-card for the "load_image" test
 #   - touch coordinates have to be swapped and/or flipped depending on
 #     display rotation. Also, a calibration (scaling) makes sense
+#   - full brightness: 150mA
+#   - light-sleep (timer): 67mA
+#   - deep-sleep (timer): 21mA@5V, 36mA@3.6V
+#     The LiPo-charger chip cuts power after 32s below 45mA, so deep-sleep
+#     is not usable when running from battery
 #
 # Author: Bernhard Bablok
 # License: GPL3
@@ -26,21 +31,21 @@
 # -------------------------------------------------------------------------
 
 TESTS = [
-  "show_colors",
-  "backlight",
+  #"show_colors",
+  #"backlight",
   #"blink_led",
   #"touch",
   # "lightsensor",
   # "aht20",            # test I2C
   "load_image",
   #"audio",
-  "light_sleep_time",
+  #"light_sleep_time",
+  "deep_sleep_time",
   # "light_sleep_pin",
-  # "deep_sleep_time",
   # "deep_sleep_pin",
   ]
 SD_FILENAME = "/sd/colors-320x240.bmp"
-SLEEP_TIME = 30
+SLEEP_TIME = 60
 
 import board
 import time
@@ -314,6 +319,8 @@ def audio():
 
 def light_sleep_time():
   while True:
+    if check_button(5):
+      return
     print("turning display off")
     old_brightness = display.brightness
     display.brightness = 0
@@ -323,8 +330,20 @@ def light_sleep_time():
     alarm.light_sleep_until_alarms(time_alarm)
     print(f"continue after wakeup!")
     display.brightness = old_brightness
+
+# --- deep-sleep until timer expires   --------------------------------------
+
+def deep_sleep_time():
+  while True:
     if check_button(5):
       return
+    #print("turning display off")
+    #old_brightness = display.brightness
+    #display.brightness = 0
+    print(f"sleeping for {SLEEP_TIME} seconds")
+    time_alarm = alarm.time.TimeAlarm(
+      monotonic_time=time.monotonic() + SLEEP_TIME)
+    alarm.exit_and_deep_sleep_until_alarms(time_alarm)
 
 # --- main program   ---------------------------------------------------------
 
