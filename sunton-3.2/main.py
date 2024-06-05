@@ -26,24 +26,26 @@
 # -------------------------------------------------------------------------
 
 TESTS = [
-  #"show_colors",
-  #"backlight",
+  "show_colors",
+  "backlight",
   #"blink_led",
   #"touch",
   # "lightsensor",
   # "aht20",            # test I2C
-  #"load_image",
-  "audio",
-  # "light_sleep_time",
+  "load_image",
+  #"audio",
+  "light_sleep_time",
   # "light_sleep_pin",
   # "deep_sleep_time",
   # "deep_sleep_pin",
   ]
 SD_FILENAME = "/sd/colors-320x240.bmp"
+SLEEP_TIME = 30
 
 import board
 import time
 import gc
+import alarm
 
 import terminalio
 import displayio
@@ -75,6 +77,15 @@ def clear_display():
   for i in range(len(test_group)):
     test_group.pop()
   gc.collect()
+
+# --- check for button until timer expires   ---------------------------------
+
+def check_button(duration):
+  start = time.monotonic()
+  while time.monotonic() - start < duration:
+    if not button.value:
+      return True
+  return False
 
 # --- colors and texts (vertical)   ------------------------------------------
 
@@ -165,12 +176,11 @@ def blink_led():
   with adafruit_rgbled.RGBLED(
     board.LED_RED, board.LED_GREEN, board.LED_BLUE, invert_pwm = True) as led:
     for index, color in enumerate(colors_adj):
-      if not button.value:
-        break
       color = color.pack()
       print(f"setting LED color to {COLORS[index][0]} {color:#08x}")
       led.color = color
-      time.sleep(3)
+      if check_button(3):
+        break
 
     print(f"turning LED off")
     led.color = 0x0
@@ -205,15 +215,14 @@ def lightsensor():
   adc_light = AnalogIn(board.LDR)
 
   while True:
-    if not button.value:
-      return
     light_sum = 0
     for _  in range(3):
       light_sum += adc_light.value
       time.sleep(0.1)
     light = light_sum/3
     print(f"light: {light:0.5f}")
-    time.sleep(0.7)
+    if check_button(1):
+      return
 
 # --- i2-device   ------------------------------------------------------------
 
@@ -228,15 +237,14 @@ def aht20():
   test_group.append(lbl)
 
   while True:
-    if not button.value:
-      return
     t = round(aht20.temperature,1)
     h = round(aht20.relative_humidity,0)
     text = f"{t:0.1f}C  {h:0.0f}%"       # terminalio.FONT has no '°'
     lbl.text = text
     display.refresh()
     print(text)
-    time.sleep(5)
+    if check_button(5):
+      return
 
 # --- load image from SD-card   ----------------------------------------------
 
@@ -299,7 +307,24 @@ def audio():
   while True:
     if play_jingle():
       return
-    time.sleep(0.5)
+    if check_button(1):
+      return
+
+# --- light-sleep until timer expires   --------------------------------------
+
+def light_sleep_time():
+  while True:
+    print("turning display off")
+    old_brightness = display.brightness
+    display.brightness = 0
+    print(f"sleeping for {SLEEP_TIME} seconds")
+    time_alarm = alarm.time.TimeAlarm(
+      monotonic_time=time.monotonic() + SLEEP_TIME)
+    alarm.light_sleep_until_alarms(time_alarm)
+    print(f"continue after wakeup!")
+    display.brightness = old_brightness
+    if check_button(5):
+      return
 
 # --- main program   ---------------------------------------------------------
 
