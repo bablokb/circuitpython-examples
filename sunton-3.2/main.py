@@ -31,18 +31,16 @@
 # -------------------------------------------------------------------------
 
 TESTS = [
-  #"show_colors",
-  #"backlight",
-  #"blink_led",
-  #"touch",
-  # "lightsensor",
-  # "aht20",            # test I2C
+  "show_colors",
+  "backlight",
+  "blink_led",
+  "touch",
+  "lightsensor",
+  "aht20",            # test I2C
   "load_image",
-  #"audio",
-  #"light_sleep_time",
+  "audio",
+  "light_sleep_time",
   "deep_sleep_time",
-  # "light_sleep_pin",
-  # "deep_sleep_pin",
   ]
 SD_FILENAME = "/sd/colors-320x240.bmp"
 SLEEP_TIME = 60
