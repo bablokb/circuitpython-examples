@@ -232,12 +232,18 @@ def lightsensor():
 def aht20():
   clear_display()
   import adafruit_ahtx0
-  aht20 = adafruit_ahtx0.AHTx0(board.I2C())
 
   lbl = Label(terminalio.FONT, text="", color=0x00FFFF, scale=2)
   lbl.anchor_point = (0.5, 0.5)
   lbl.anchored_position = (display.width//2, display.height//2)
   test_group.append(lbl)
+
+  try:
+    aht20 = adafruit_ahtx0.AHTx0(board.I2C())
+  except Exception as ex:
+    lbl.text = f"{ex}"
+    display.refresh()
+    return
 
   while True:
     t = round(aht20.temperature,1)
@@ -258,12 +264,16 @@ def load_image():
     os.mkdir("/sd")
   except:
     pass
-  spi    = board.SD_SPI()
-  sdcard = sdcardio.SDCard(spi,board.SD_CS,1_000_000)
-  vfs    = storage.VfsFat(sdcard)
-  storage.mount(vfs, "/sd")
+  try:
+    spi    = board.SD_SPI()
+    sdcard = sdcardio.SDCard(spi,board.SD_CS,1_000_000)
+    vfs    = storage.VfsFat(sdcard)
+    storage.mount(vfs, "/sd")
+    img_filename = SD_FILEANAME
+  except:
+    img_filename = SD_FILENAME.split('/')[2]
 
-  img_file = open(SD_FILENAME, "rb")
+  img_file = open(img_filename, "rb")
   bmp  = displayio.OnDiskBitmap(img_file)
   tile = displayio.TileGrid(bmp,pixel_shader=displayio.ColorConverter())
 
