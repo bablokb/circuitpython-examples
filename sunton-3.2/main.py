@@ -93,6 +93,7 @@ def check_button(duration):
 # --- colors and texts (vertical)   ------------------------------------------
 
 def show_colors():
+  start = time.monotonic()
   clear_display()
   N_SHADES = 4
   N_COLORS = N_SHADES*N_SHADES*N_SHADES
@@ -115,7 +116,9 @@ def show_colors():
   lbl.anchor_point = (0.5, 0.5)
   lbl.anchored_position = (display.width//2,display.height//2)
   test_group.append(lbl)
+  start = elapsed_time(start,"show_colors (ui)")
   display.refresh()
+  start = elapsed_time(start,"show_colors (refresh)")
 
 # --- backlight test   -------------------------------------------------------
 
@@ -258,6 +261,7 @@ def aht20():
 # --- load image from SD-card   ----------------------------------------------
 
 def load_image():
+  start = time.monotonic()
   clear_display()
   import os, storage, sdcardio
   try:
@@ -278,7 +282,9 @@ def load_image():
   tile = displayio.TileGrid(bmp,pixel_shader=displayio.ColorConverter())
 
   test_group.append(tile)
+  start = elapsed_time(start,"load_image (load)")
   display.refresh()
+  start = elapsed_time(start,"load_image (refresh)")
 
 # --- audio   ----------------------------------------------------------------
 
@@ -353,16 +359,26 @@ def deep_sleep_time():
       monotonic_time=time.monotonic() + SLEEP_TIME)
     alarm.exit_and_deep_sleep_until_alarms(time_alarm)
 
+# --- print elapsed time   ---------------------------------------------------
+
+def elapsed_time(start,text):
+  print(f"{text}: {time.monotonic()-start}")
+  return time.monotonic()
+
 # --- main program   ---------------------------------------------------------
 
 print(f"Starting tests for {board.board_id}")
 print("interrupt a test by pressing the button")
+start = time.monotonic()
 for tst in [(fkt,globals()[fkt]) for fkt in TESTS]:
   time.sleep(3)
+  start = elapsed_time(start,f"{tst[0]} (sleep)")
   tst_name.text = tst[0]
   display.refresh()
+  start = elapsed_time(start,f"{tst[0]} (title)")
   print(f"running test: {tst[0]}")
   tst[1]()
+  start = elapsed_time(start,f"{tst[0]} (run)")
   print(f"finished: {tst[0]}")
 
 tst_name.text = "finished!"
