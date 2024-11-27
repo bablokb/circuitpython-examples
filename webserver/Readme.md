@@ -12,6 +12,10 @@ After startup, the program prints an URL. You should copy this URL
 into a browser with activated development tools, and deactivate
 the browser cache.
 
+Note: this program needs the module `ehttpserver`. Install it using
+
+    circup install ehttpserver
+
 Throughputs with various systems:
 
   - Pico-W (8.0.5 and 9.2.1): about 11s
