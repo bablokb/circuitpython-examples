@@ -18,6 +18,16 @@
 import board
 import displayio
 
+# compat imports
+try:
+  from fourwire import FourWire
+except:
+  from displayio import FourWire
+try:
+  from epaperdisplay import EPaperDisplay
+except:
+  from displayio import EPaperDisplay
+
 _START_SEQUENCE = (
     b"\x01\x05\x03\x00\x2b\x2b\x2b"          # power setting
     b"\x04\x80\xc8"                          # power on and wait 200 ms
@@ -79,7 +89,7 @@ _START_SEQUENCE = (
 
 _STOP_SEQUENCE = b"\x02\x00"  #Power off
 
-class InkyPack(displayio.EPaperDisplay):
+class InkyPack(EPaperDisplay):
   r"""InkyPack UC8151 driver
 
   :param bus: The data bus the display is on
@@ -95,7 +105,7 @@ class InkyPack(displayio.EPaperDisplay):
           Display rotation
   """
 
-  def __init__(self, bus: displayio.FourWire, **kwargs) -> None:
+  def __init__(self, bus: FourWire, **kwargs) -> None:
     super().__init__(
       bus,
       _START_SEQUENCE,
