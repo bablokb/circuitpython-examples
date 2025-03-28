@@ -8,5 +8,7 @@
 #
 # -------------------------------------------------------------------------
 
+import time
 import gc
+time.sleep(5)
 print(f"free memory at start: {gc.mem_free()}")
