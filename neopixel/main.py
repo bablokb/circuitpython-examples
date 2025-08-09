@@ -3,10 +3,10 @@ import time
 import board
 import neopixel
 
-pixel_pin = board.D4
-num_pixels = 24
+pixel_pin = board.NEOPIXEL
+num_pixels = 1
 
-pixels = neopixel.NeoPixel(pixel_pin, num_pixels, brightness=0.3, auto_write=False)
+pixels = neopixel.NeoPixel(pixel_pin, num_pixels, brightness=0.1, auto_write=False)
 
 
 def wheel(pos):
@@ -48,22 +48,32 @@ BLUE = (0, 0, 255)
 PURPLE = (180, 0, 255)
 
 while True:
+    print("red...")
     pixels.fill(RED)
     pixels.show()
     # Increase or decrease to change the speed of the solid color change.
     time.sleep(1)
+    print("green...")
     pixels.fill(GREEN)
     pixels.show()
     time.sleep(1)
+    print("blue...")
     pixels.fill(BLUE)
     pixels.show()
     time.sleep(1)
 
+    print("red...")
     color_chase(RED, 0.1)  # Increase the number to slow down the color chase
+    print("yellow...")
     color_chase(YELLOW, 0.1)
+    print("green...")
     color_chase(GREEN, 0.1)
+    print("cyan...")
     color_chase(CYAN, 0.1)
+    print("blue...")
     color_chase(BLUE, 0.1)
+    print("purple...")
     color_chase(PURPLE, 0.1)
 
-    rainbow_cycle(0)  # Increase the number to slow down the rainbow
+    print("rainbow...")
+    rainbow_cycle(1)  # Increase the number to slow down the rainbow
