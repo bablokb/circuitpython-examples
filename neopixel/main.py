@@ -13,8 +13,10 @@ import time
 import board
 import neopixel
 
-pixel_pin = board.DATA
+pixel_pin  = board.DATA
 num_pixels = 64
+INT_COLORS = 15
+INT_ANIM   = 0.1
 
 def wheel(pos):
     # Input a value 0 to 255 to get a color value.
@@ -69,8 +71,8 @@ pixels = neopixel.NeoPixel(pixel_pin, num_pixels,
 atexit.register(at_exit,pixels)
 
 # some idle time (e.g. to measure idle-current)
-print("idle for 10 seconds...")
-time.sleep(10)
+print(f"idle for {INT_COLORS} seconds...")
+time.sleep(INT_COLORS)
 print(f"running with {pixels.n} pixels")
 
 while True:
@@ -78,32 +80,32 @@ while True:
     pixels.fill(RED)
     pixels.show()
     # Increase or decrease to change the speed of the solid color change.
-    time.sleep(3)
+    time.sleep(INT_COLORS)
     print("green...")
     pixels.fill(GREEN)
     pixels.show()
-    time.sleep(3)
+    time.sleep(INT_COLORS)
     print("blue...")
     pixels.fill(BLUE)
     pixels.show()
-    time.sleep(3)
+    time.sleep(INT_COLORS)
     print("white...")
     pixels.fill(WHITE)
     pixels.show()
-    time.sleep(3)
+    time.sleep(INT_COLORS)
 
     print("red...")
-    color_chase(RED, 0.1)  # Increase the number to slow down the color chase
+    color_chase(RED, INT_ANIM)  # Increase the number to slow down the color chase
     print("yellow...")
-    color_chase(YELLOW, 0.1)
+    color_chase(YELLOW, INT_ANIM)
     print("green...")
-    color_chase(GREEN, 0.1)
+    color_chase(GREEN, INT_ANIM)
     print("cyan...")
-    color_chase(CYAN, 0.1)
+    color_chase(CYAN, INT_ANIM)
     print("blue...")
-    color_chase(BLUE, 0.1)
+    color_chase(BLUE, INT_ANIM)
     print("purple...")
-    color_chase(PURPLE, 0.1)
+    color_chase(PURPLE, INT_ANIM)
 
     print("rainbow...")
-    rainbow_cycle(0.2)  # Increase the number to slow down the rainbow
+    rainbow_cycle(INT_ANIM)  # Increase the number to slow down the rainbow
