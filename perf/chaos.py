@@ -25,7 +25,8 @@ def bm_run(N, M):
     run()
     t1 = ticks_us()
     norm, out = result()
-    print(ticks_diff(t1, t0), norm, out)
+    #print(ticks_diff(t1, t0), norm, out)
+    print(f"{ticks_diff(t1, t0)/1000000:6.3f}s")
 # Source: https://github.com/python/pyperformance
 # License: MIT
 
@@ -311,6 +312,3 @@ def bm_setup(params):
         return norm, pix
 
     return run, result
-
-# execute test
-bm_run(133,100)   # MHz, heap in kB

@@ -19,16 +19,16 @@ import storage
 import time
 
 # pico
-SD_CS    = board.GP17
-SD_SCK   = board.GP18
-SD_MOSI  = board.GP19
-SD_MISO  = board.GP16
+#SD_CS    = board.GP17
+#SD_SCK   = board.GP18
+#SD_MOSI  = board.GP19
+#SD_MISO  = board.GP16
 
 #itsy-bitsy-m4-express
-#SD_CS   = board.A5     # CS
-#SD_SCK  = board.SCK    # CLK  (S1.1)
-#SD_MOSI = board.MOSI   # MOSI (S1.0)
-#SD_MISO = board.MISO   # MISO (S1.2)
+SD_CS   = board.A5     # CS
+SD_SCK  = board.SCK    # CLK  (S1.1)
+SD_MOSI = board.MOSI   # MOSI (S1.0)
+SD_MISO = board.MISO   # MISO (S1.2)
 
 def at_exit(spi):
   """ release spi """
@@ -49,27 +49,31 @@ def mount_sd():
     raise
 
 time.sleep(5)
+print("mounting SD...")
 mount_sd()
+print("done")
 
-gc.collect()
-print("starting chaos")
-import chaos
+while True:
+  gc.collect()
+  #print("starting chaos")
+  import chaos
+  chaos.bm_run(133,100)   # MHz, heap in kB
 
-gc.collect()
-print("starting pidigits")
-import pidigits
+  #gc.collect()
+  #print("starting pidigits")
+  #import pidigits
 
-gc.collect()
-print("starting wordcount")
-import wordcount
+  #gc.collect()
+  #print("starting wordcount")
+  #import wordcount
 
-gc.collect()
-print("starting dict_copy")
-import dict_copy
+  #gc.collect()
+  #print("starting dict_copy")
+  #import dict_copy
 
-gc.collect()
-print("starting list_sort")
-import list_sort
+  #gc.collect()
+  #print("starting list_sort")
+  #import list_sort
 
 # Pico-W CP 9.2.9
 # starting chaos
