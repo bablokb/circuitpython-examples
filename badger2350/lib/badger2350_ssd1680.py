@@ -107,7 +107,6 @@ class SSD1680(EPaperDisplay):
       _START_SEQUENCE,
       _STOP_SEQUENCE,
       **kwargs,
-      #colstart=8,
       height=height,
       width=width,
       ram_width=250,
@@ -126,6 +125,6 @@ class SSD1680(EPaperDisplay):
       refresh_display_command=_REFRESH_SEQUENCE,
       always_toggle_chip_select=False,
       two_byte_sequence_length=True,
-      #address_little_endian=True,
+      address_little_endian=True,
       seconds_per_frame=3,
       )
