@@ -1,17 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Bernhard Bablok
-#
-# SPDX-License-Identifier: MIT
-"""
-`badger2350_ssd1680`
-================================================================================
-
-CircuitPython `displayio` driver for Badger2350-SSD1680
-
-
-* Author(s): Bernhard Bablok
-
-"""
-
 from epaperdisplay import EPaperDisplay
 
 try:
@@ -24,11 +10,11 @@ SPEED = 1
 
 # 5x12 = 60 bytes
 _LUT_START = (
-  b"\x40\x68\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" # VS L0
-  b"\xA0\x65\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" # VS L1
-  b"\xA8\x65\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00" # VS L2
-  b"\xAA\x65\x50\x00\x00\x00\x00\x00\x00\x00\x00\x00" # VS L3
-  b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" # VS L4
+  b"\x40\x68\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"     # VS L0
+  b"\xA0\x65\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"     # VS L1
+  b"\xA8\x65\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00"     # VS L2
+  b"\xAA\x65\x50\x00\x00\x00\x00\x00\x00\x00\x00\x00"     # VS L3
+  b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"     # VS L4
   )
 
 # every entry will have an added byte at the end for the repeat-count
@@ -66,23 +52,13 @@ _START_SEQUENCE = (
   b"\x4e\x00\x01\x00"              # SRXC ram x address
   b"\x4f\x00\x02\x00\x00"          # SRYC ram y address (0)
   b"\x01\x00\x03\x07\x01\x00"      # DOC set display size x0107 = 264-1 lines
-  #b"\x44\x00\x02\x00\x15"          # SRX set RAM x-start (POR, x15 = 176/8-1 cols)
-  #b"\x45\x00\x04\x00\x00\x07\x01"  # SRY set RAM y-start (0-263)
-
 ) + (
   b"\x32\x00\x99"                  # WLR with x99=153 bytes and delay of 500ms
 ) + _LUT_START+_LUT_REPEAT+_LUT_END + (
-
-  b"\x22\x00\x01\xC7"          # DUC2
-
-  #b"\x7f\x80\x00\xff"
-  #b"\x3f\x00\x01\x22"              # EOPT
+  b"\x22\x00\x01\xc7"              # DUC2
 )
 
-_REFRESH_SEQUENCE = (
-  #b"\x0c\x00\x00"              # BTST
-  b"\x20\x00\x00"              # ADUS
-)
+_REFRESH_SEQUENCE = b"\x20\x00\x00" # ADUS
 
 # DSM1: 1µA, DSM2: 0.7µA (DSM1 keeps RAM)
 _STOP_SEQUENCE = b"\x10\x00\x01\x01"  # DSM Deep Sleep Mode 1
@@ -92,27 +68,22 @@ class SSD1680(EPaperDisplay):
   r"""SSD1680 driver
 
   :param bus: The data bus the display is on
-  :Keyword Arguments:
-    * *speed* (``int``) --
-      Update speed (0-3, 0: slowest, default: 1)
   """
 
-  def __init__(
-    self, bus: FourWire, height=176, width=264, **kwargs
-   ) -> None:
+  def __init__(self, bus: FourWire, **kwargs) -> None:
     bus.reset()
-
     super().__init__(
       bus,
       _START_SEQUENCE,
       _STOP_SEQUENCE,
       **kwargs,
-      height=height,
-      width=width,
+      width=264,
+      height=176,
       ram_width=250,
       ram_height=296,
       busy_state=True,
       grayscale=True,
+      refresh_time=1,
       black_bits_inverted=False,
       color_bits_inverted=True,
       highlight_color=0xFF2121,
