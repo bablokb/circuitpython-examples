@@ -6,7 +6,7 @@ try:
 except ImportError:
   pass
 
-SPEED = 1
+SPEED = 3
 
 # 5x12 = 60 bytes
 _LUT_START = (
@@ -86,7 +86,6 @@ class SSD1680(EPaperDisplay):
       refresh_time=1,
       black_bits_inverted=False,
       color_bits_inverted=True,
-      highlight_color=0xFF2121,
       write_black_ram_command=0x24,
       write_color_ram_command=0x26,
       set_column_window_command=0x44,
